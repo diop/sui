@@ -8,6 +8,7 @@ use std::path::Path;
 use sui_storage::default_db_options;
 use sui_types::accumulator::Accumulator;
 use sui_types::base_types::SequenceNumber;
+use sui_types::digests::TransactionEventsDigest;
 use sui_types::storage::ObjectStore;
 use typed_store::metrics::SamplingInterval;
 use typed_store::rocks::{DBMap, DBOptions, MetricConf, ReadWriteOptions};
@@ -71,6 +72,7 @@ pub struct AuthorityPerpetualTables {
     /// to be executed, we wait for them to appear in this table. When we revert transactions, we remove them from both
     /// tables.
     pub(crate) executed_effects: DBMap<TransactionDigest, TransactionEffectsDigest>,
+    pub(crate) events: DBMap<TransactionEventsDigest, TransactionEvents>,
 
     /// When transaction is executed via checkpoint executor, we store association here
     pub(crate) executed_transactions_to_checkpoint:

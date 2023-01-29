@@ -105,6 +105,7 @@ use crate::{
     event_handler::EventHandler, transaction_input_checker, transaction_manager::TransactionManager,
 };
 use sui_adapter::execution_engine;
+use sui_types::digests::TransactionEventsDigest;
 
 use self::authority_store::InputKey;
 
@@ -850,6 +851,8 @@ impl AuthorityState {
             .map(|(_, ((id, seq, _), obj, _))| InputKey(*id, (!obj.is_package()).then_some(*seq)))
             .collect();
 
+        let events = inner_temporary_store.events.clone();
+
         self.commit_certificate(inner_temporary_store, certificate, effects, epoch_store)
             .await?;
 
@@ -870,7 +873,7 @@ impl AuthorityState {
 
         // index certificate
         let _ = self
-            .post_process_one_tx(certificate, effects)
+            .post_process_one_tx(certificate, effects, &events)
             .await
             .tap_err(|e| error!("tx post processing failed: {e}"));
 
@@ -1011,7 +1014,7 @@ impl AuthorityState {
                 &epoch_store.epoch_start_configuration().epoch_data(),
                 epoch_store.protocol_config(),
             );
-        SuiTransactionEffects::try_from(effects, self.module_cache.as_ref())
+        Ok(effects.into())
     }
 
     /// The object ID for gas can be any object ID, even for an uncreated object
@@ -1093,7 +1096,7 @@ impl AuthorityState {
                 &epoch_store.epoch_start_configuration().epoch_data(),
                 protocol_config,
             );
-        DevInspectResults::new(effects, execution_result, self.module_cache.as_ref())
+        DevInspectResults::new(effects, execution_result)
     }
 
     pub fn is_tx_already_executed(&self, digest: &TransactionDigest) -> SuiResult<bool> {
@@ -1297,6 +1300,7 @@ impl AuthorityState {
         &self,
         certificate: &VerifiedExecutableTransaction,
         effects: &TransactionEffects,
+        events: &TransactionEvents,
     ) -> SuiResult {
         if self.indexes.is_none() && self.event_handler.is_none() {
             return Ok(());
@@ -1321,7 +1325,7 @@ impl AuthorityState {
             // Emit events
             if let (Some(event_handler), Ok(seq)) = (&self.event_handler, res) {
                 event_handler
-                    .process_events(effects, timestamp_ms, seq)
+                    .process_events(effects, events, timestamp_ms, seq)
                     .await
                     .tap_ok(|_| {
                         self.metrics
@@ -1337,7 +1341,7 @@ impl AuthorityState {
 
                 self.metrics
                     .post_processing_total_events_emitted
-                    .inc_by(effects.events.len() as u64);
+                    .inc_by(events.data.len() as u64);
             }
         };
 
@@ -2083,6 +2087,13 @@ impl AuthorityState {
         }
     }
 
+    pub async fn get_transaction_events(
+        &self,
+        digest: TransactionEventsDigest,
+    ) -> SuiResult<TransactionEvents> {
+        self.database.get_events(&digest)
+    }
+
     fn get_indexes(&self) -> SuiResult<Arc<IndexStore>> {
         match &self.indexes {
             Some(i) => Ok(i.clone()),
@@ -2189,7 +2200,7 @@ impl AuthorityState {
             .map(|handler| handler.event_store.clone())
     }
 
-    pub async fn get_events(
+    pub async fn query_events(
         &self,
         query: EventQuery,
         cursor: Option<EventID>,
@@ -2316,9 +2327,14 @@ impl AuthorityState {
         {
             if let Some(transaction) = self.database.get_transaction(transaction_digest)? {
                 let cert_sig = epoch_store.get_transaction_cert_sig(transaction_digest)?;
+                let events = if let Some(digest) = effects.events_summary.digest {
+                    self.database.get_events(&digest)?
+                } else {
+                    TransactionEvents::default()
+                };
                 return Ok(Some((
                     transaction.into_message(),
-                    TransactionStatus::Executed(cert_sig, effects.into_inner()),
+                    TransactionStatus::Executed(cert_sig, effects.into_inner(), events),
                 )));
             } else {
                 // The read of effects and read of transaction are not atomic. It's possible that we reverted

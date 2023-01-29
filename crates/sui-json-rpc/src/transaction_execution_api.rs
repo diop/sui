@@ -16,7 +16,9 @@ use std::sync::Arc;
 use sui_core::authority::{AuthorityState, AuthorityStore, ResolverWrapper};
 use sui_core::authority_client::NetworkAuthorityClient;
 use sui_core::transaction_orchestrator::TransactiondOrchestrator;
-use sui_json_rpc_types::{DevInspectResults, SuiTransactionEffects, SuiTransactionResponse};
+use sui_json_rpc_types::{
+    DevInspectResults, SuiTransactionEffects, SuiTransactionEvents, SuiTransactionResponse,
+};
 use sui_open_rpc::Module;
 use sui_types::base_types::{EpochId, SuiAddress};
 use sui_types::intent::Intent;
@@ -102,13 +104,11 @@ impl WriteApiServer for TransactionExecutionApi {
 
         match response {
             ExecuteTransactionResponse::EffectsCert(cert) => {
-                let (effects, is_executed_locally) = *cert;
+                let (effects, events, is_executed_locally) = *cert;
                 Ok(SuiTransactionResponse {
                     transaction: tx,
-                    effects: SuiTransactionEffects::try_from(
-                        effects.effects,
-                        self.module_cache.as_ref(),
-                    )?,
+                    effects: effects.effects.into(),
+                    events: SuiTransactionEvents::try_from(events, self.module_cache.as_ref())?,
                     timestamp_ms: None,
                     confirmed_local_execution: Some(is_executed_locally),
                     checkpoint: None,
