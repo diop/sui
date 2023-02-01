@@ -447,7 +447,7 @@ impl SuiNode {
                 narwhal_network::connectivity::ConnectionMonitor::spawn(
                     network.downgrade(),
                     network_connection_metrics,
-                    HashMap::default(), // TODO populate this with peers
+                    HashMap::default(),
                     None,
                 );
 
