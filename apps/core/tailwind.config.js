@@ -53,6 +53,7 @@ module.exports = {
       hero: {
         DEFAULT: "#0284AD",
         dark: "#007195",
+        darker: "#006195",
         darkest: "#15527B",
       },
       success: {
