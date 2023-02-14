@@ -1,10 +1,8 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
-import { ReactComponent as PreviewMediaIcon } from '../../../assets/SVGIcons/preview-media.svg';
-import DisplayBox from '../../../components/displaybox/DisplayBox';
 import Longtext from '../../../components/longtext/Longtext';
 import ModulesWrapper from '../../../components/module/ModulesWrapper';
 import OwnedObjects from '../../../components/ownedobjects/OwnedObjects';
@@ -19,13 +17,16 @@ import {
     trimStdLibPrefix,
     genFileTypeMsg,
     normalizeSuiAddress,
+    transformURL,
 } from '../../../utils/stringUtils';
 import { type DataType } from '../ObjectResultType';
 
 import styles from './ObjectView.module.css';
 
+import { useImageMod } from '~/hooks/useImageMod';
 import { ObjectLink, TransactionLink } from '~/ui/InternalLink';
 import { Link } from '~/ui/Link';
+import { ObjectDetails } from '~/ui/ObjectDetails';
 
 function TokenView({ data }: { data: DataType }) {
     const viewedData = {
@@ -66,17 +67,14 @@ function TokenView({ data }: { data: DataType }) {
         };
     }, [viewedData.url]);
 
-    const [isImageFullScreen, setImageFullScreen] = useState<boolean>(false);
-
-    const handlePreviewClick = useCallback(() => {
-        setImageFullScreen(true);
-    }, []);
-
     const genhref = (objType: string) => {
         const metadataarr = objType.split('::');
         const address = normalizeSuiAddress(metadataarr[0]);
         return `/object/${address}?module=${metadataarr[1]}`;
     };
+
+    const imageUrl = transformURL(viewedData.url);
+    const { data: allowed } = useImageMod({ url: imageUrl });
 
     return (
         <div>
@@ -156,41 +154,15 @@ function TokenView({ data }: { data: DataType }) {
                         </tbody>
                     </table>
                 </div>
-                {viewedData.url !== '' && (
+                {viewedData.url && (
                     <div className={styles.displaycontainer}>
-                        <div className={styles.display}>
-                            <DisplayBox
-                                display={viewedData.url}
-                                caption={
-                                    name || trimStdLibPrefix(viewedData.objType)
-                                }
-                                fileInfo={fileType}
-                                modalImage={[
-                                    isImageFullScreen,
-                                    setImageFullScreen,
-                                ]}
-                            />
-                            <button
-                                type="button"
-                                onClick={handlePreviewClick}
-                                className={styles.mobilepreviewmedia}
-                            >
-                                Preview Media <PreviewMediaIcon />
-                            </button>
-                        </div>
-                        <div className={styles.metadata}>
-                            {name && <h2 className={styles.header}>{name}</h2>}
-                            {fileType && (
-                                <p className={styles.header}>{fileType}</p>
-                            )}
-                            <button
-                                type="button"
-                                onClick={handlePreviewClick}
-                                className={styles.desktoppreviewmedia}
-                            >
-                                Preview Media <PreviewMediaIcon />
-                            </button>
-                        </div>
+                        <ObjectDetails
+                            image={viewedData.url}
+                            name={name || trimStdLibPrefix(viewedData.objType)}
+                            type={fileType!}
+                            variant="large"
+                            nsfw={!allowed}
+                        />
                     </div>
                 )}
             </div>
