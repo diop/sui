@@ -8506,6 +8506,7 @@ dependencies = [
  "bytes",
  "chrono",
  "clap 3.2.23",
+ "dashmap",
  "either",
  "eyre",
  "fastcrypto",
