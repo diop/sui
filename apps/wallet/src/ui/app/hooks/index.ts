@@ -22,6 +22,7 @@ export { useGetObject } from './useGetObject';
 export { useGetTxnRecipientAddress } from './useGetTxnRecipientAddress';
 export { useGetTransactionsByAddress } from './useGetTransactionsByAddress';
 export { useGetTransferAmount } from './useGetTransferAmount';
+export { useObjectsOwnedByAddress } from './useObjectsOwnedByAddress';
 export * from './useSigner';
 export * from './useIndividualCoinMaxBalance';
 export * from './useOriginbyteNft';
