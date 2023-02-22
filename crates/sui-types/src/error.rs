@@ -87,6 +87,8 @@ pub enum SuiError {
     DeleteObjectOwnedObject,
     #[error("Invalid Batch Transaction: {}", error)]
     InvalidBatchTransaction { error: String },
+    #[error("Size limit exceeded: {limit} is {value}")]
+    SizeLimitExceeded { limit: String, value: String },
     #[error(
         "Object {child_id:?} is owned by object {parent_id:?}. \
         Objects owned by other objects cannot be used as input arguments."
