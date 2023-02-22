@@ -1107,10 +1107,19 @@ where
             InsertResult::NotEnoughVotes => Ok(None),
             InsertResult::Failed { error } => Err(error),
             InsertResult::QuorumReached(cert_sig) => {
-                let ct = CertifiedTransaction::new_from_data_and_sig(data, cert_sig);
-                Ok(Some(ProcessTransactionResult::Certified(
-                    ct.verify(&self.committee)?,
-                )))
+                let ct = CertifiedTransaction::new_from_data_and_sig(data.clone(), cert_sig);
+                let res = ct.verify(&self.committee);
+                match res {
+                    Ok(ct) => Ok(Some(ProcessTransactionResult::Certified(ct))),
+                    Err(err) => {
+                        debug!(
+                            "Fail to verify the aggregated siganture for tx: {:?} sigs: {:?}",
+                            data.digest(),
+                            state.tx_signatures
+                        );
+                        Err(err)
+                    }
+                }
             }
         }
     }

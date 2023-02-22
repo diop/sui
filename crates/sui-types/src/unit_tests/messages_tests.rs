@@ -556,7 +556,6 @@ fn test_user_signature_committed_in_transactions() {
 
 #[test]
 fn test_user_signature_committed_in_signed_transactions() {
-    // TODO: refactor this test to not reuse the same keys for user and authority signing
     let (_a1, sec1): (_, AuthorityKeyPair) = get_key_pair();
     let (a_sender, sender_sec): (_, AccountKeyPair) = get_key_pair();
     let (a_sender2, sender_sec2): (_, AccountKeyPair) = get_key_pair();
@@ -581,13 +580,13 @@ fn test_user_signature_committed_in_signed_transactions() {
 
     let signed_tx_a = SignedTransaction::new(
         0,
-        transaction_a.clone().into_message(),
+        transaction_a.into_message(),
         &sec1,
         AuthorityPublicKeyBytes::from(sec1.public()),
     );
     let signed_tx_b = SignedTransaction::new(
         0,
-        transaction_b.clone().into_message(),
+        transaction_b.into_message(),
         &sec1,
         AuthorityPublicKeyBytes::from(sec1.public()),
     );
@@ -601,14 +600,12 @@ fn test_user_signature_committed_in_signed_transactions() {
     let mut authorities: BTreeMap<AuthorityPublicKeyBytes, u64> = BTreeMap::new();
     authorities.insert(AuthorityPublicKeyBytes::from(sec1.public()), 1);
     let committee = Committee::new(0, ProtocolVersion::MIN, authorities.clone()).unwrap();
-    assert!(signed_tx_a
-        .auth_sig()
-        .verify(transaction_a.data(), &committee)
-        .is_ok());
-    assert!(signed_tx_a
-        .auth_sig()
-        .verify(transaction_b.data(), &committee)
-        .is_err());
+
+    // tx_a is valid, the corresponding authority signed envelope also verifies.
+    assert!(signed_tx_a.clone().verify(&committee).is_ok());
+
+    // tx_b is invalid with incorrect signer, the authority signed envelope does not verify.
+    assert!(signed_tx_b.clone().verify(&committee).is_err());
 
     // Test hash non-equality
     let mut hasher = DefaultHasher::new();
@@ -945,15 +942,7 @@ fn verify_sender_signature_correctly_with_flag() {
     assert_eq!(s.scheme().flag(), Ed25519SuiSignature::SCHEME.flag());
 
     // signature verified
-    assert!(signed_tx_1
-        .auth_sig()
-        .verify(transaction_1.data(), &committee)
-        .is_ok());
-
-    assert!(signed_tx_1
-        .auth_sig()
-        .verify(transaction.data(), &committee)
-        .is_err());
+    assert!(signed_tx_1.verify(&committee).is_ok());
 
     // create transaction with r1 signer
     let tx_3 = Transaction::from_data_and_signer(tx_data_3, Intent::default(), vec![&sender_kp_3]);
@@ -1113,4 +1102,75 @@ fn dummy_move_call(
         args,
         MAX_GAS,
     )
+}
+
+#[test]
+fn test_aggregated_auth_sig_verifies() {
+    let (_a1, sec1): (_, AuthorityKeyPair) = get_key_pair();
+    let (_a2, sec2): (_, AuthorityKeyPair) = get_key_pair();
+
+    let mut authorities: BTreeMap<AuthorityPublicKeyBytes, u64> = BTreeMap::new();
+    authorities.insert(AuthorityPublicKeyBytes::from(sec1.public()), 1);
+    authorities.insert(AuthorityPublicKeyBytes::from(sec2.public()), 1);
+
+    let committee = Committee::new(0, ProtocolVersion::MIN, authorities.clone()).unwrap();
+
+    let (a_sender, sender_sec): (_, AccountKeyPair) = get_key_pair();
+    let (a_sender2, _sender_sec2): (_, AccountKeyPair) = get_key_pair();
+
+    let transaction_a = Transaction::from_data_and_signer(
+        TransactionData::new_transfer_with_dummy_gas_price(
+            a_sender2,
+            random_object_ref(),
+            a_sender,
+            random_object_ref(),
+            10000,
+        ),
+        Intent::default(),
+        vec![&sender_sec],
+    )
+    .verify()
+    .unwrap();
+
+    let signed_tx_a = SignedTransaction::new(
+        0,
+        transaction_a.clone().into_message(),
+        &sec1,
+        AuthorityPublicKeyBytes::from(sec1.public()),
+    );
+
+    let signed_tx_b = SignedTransaction::new(
+        0,
+        transaction_a.into_message(),
+        &sec2,
+        AuthorityPublicKeyBytes::from(sec2.public()),
+    );
+
+    // Both authority signed signatures verify ok.
+    assert!(signed_tx_a.clone().verify(&committee).is_ok());
+    assert!(signed_tx_b.clone().verify(&committee).is_ok());
+
+    // Verify ok when quorum is reached and cert is formed.
+    let signatures = vec![
+        signed_tx_a.auth_sig().clone(),
+        signed_tx_b.auth_sig().clone(),
+    ];
+    let quorum =
+        AuthorityStrongQuorumSignInfo::new_from_auth_sign_infos(signatures, &committee).unwrap();
+    let ct = CertifiedTransaction::new_from_data_and_sig(signed_tx_a.clone().into_data(), quorum);
+    assert!(ct.verify(&committee).is_ok());
+
+    // Make a bad signature for AuthoritySignInfo
+    let bad_auth_sig = AuthoritySignInfo {
+        epoch: 0,
+        authority: AuthorityPublicKeyBytes::from(sec2.public()),
+        signature: AuthoritySignature::default(),
+    };
+    let signatures = vec![bad_auth_sig, signed_tx_b.auth_sig().clone()];
+    let quorum =
+        AuthorityStrongQuorumSignInfo::new_from_auth_sign_infos(signatures, &committee).unwrap();
+
+    // The cerified transaction failed to verify because the aggregated signature failed to verify.
+    let ct = CertifiedTransaction::new_from_data_and_sig(signed_tx_a.into_data(), quorum);
+    assert!(ct.verify(&committee).is_err());
 }

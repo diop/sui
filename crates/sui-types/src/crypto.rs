@@ -1110,6 +1110,17 @@ impl AuthoritySignInfoTrait for EmptySignInfo {
     }
 }
 
+pub fn add_aggregate<S, T>(sig: &S, data: &T, committee: &Committee, epoch_id: EpochId) -> SuiResult
+where
+    S: AuthoritySignInfoTrait,
+    T: Signable<Vec<u8>>,
+{
+    let mut obligation = VerificationObligation::default();
+    let idx = obligation.add_message(data, epoch_id);
+    sig.add_to_verification_obligation(committee, &mut obligation, idx)?;
+    Ok(())
+}
+
 pub fn add_to_verification_obligation_and_verify<S, T>(
     sig: &S,
     data: &T,
@@ -1135,7 +1146,7 @@ pub struct AuthoritySignInfo {
 }
 impl AuthoritySignInfoTrait for AuthoritySignInfo {
     fn verify<T: Signable<Vec<u8>>>(&self, data: &T, committee: &Committee) -> SuiResult<()> {
-        add_to_verification_obligation_and_verify(self, data, committee, self.epoch)
+        add_aggregate(self, data, committee, self.epoch)
     }
 
     fn add_to_verification_obligation(
