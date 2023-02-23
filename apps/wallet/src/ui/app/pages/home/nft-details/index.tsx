@@ -19,11 +19,7 @@ import { ExplorerLinkType } from '_components/explorer-link/ExplorerLinkType';
 import Icon, { SuiIcons } from '_components/icon';
 import Loading from '_components/loading';
 import { NFTDisplayCard } from '_components/nft-display';
-import {
-    useAppSelector,
-    useNFTBasicData,
-    useGetObject,
-} from '_hooks';
+import { useAppSelector, useNFTBasicData, useGetObject } from '_hooks';
 import ExternalLink from '_src/ui/app/components/external-link';
 import PageTitle from '_src/ui/app/shared/PageTitle';
 

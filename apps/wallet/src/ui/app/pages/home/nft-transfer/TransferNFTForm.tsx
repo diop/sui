@@ -102,6 +102,7 @@ function TransferNFTForm({
                         !isValid ||
                         isSubmitting ||
                         isInsufficientGas ||
+                        !gasBudget ||
                         !gasBudgetInMist
                     }
                     size="tall"
