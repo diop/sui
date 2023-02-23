@@ -162,9 +162,9 @@ fn test_load_keystore_err() {
 #[test]
 fn test_mnemonics_ed25519() -> Result<(), anyhow::Error> {
     // Test case matches with /mysten/sui/sdk/typescript/test/unit/cryptography/ed25519-keypair.test.ts
-    const TEST_CASES: [[&str; 3]; 3] = [["film crazy soon outside stand loop subway crumble thrive popular green nuclear struggle pistol arm wife phrase warfare march wheat nephew ask sunny firm", "AN0JMHpDum3BhrVwnkylH0/HGRHBQ/fO/8+MYOawO8j6", "8867068daf9111ee013450eea1b1e10ffd62fc87"],
-    ["require decline left thought grid priority false tiny gasp angle royal system attack beef setup reward aunt skill wasp tray vital bounce inflict level", "AJrA997C1eVz6wYIp7bO8dpITSRBXpvg1m70/P3gusu2", "29bb131378438b6c7f50526e6a853a72ed97f10b"],
-    ["organ crash swim stick traffic remember army arctic mesh slice swear summer police vast chaos cradle squirrel hood useless evidence pet hub soap lake", "AAEMSIQeqyz09StSwuOW4MElQcZ+4jHW4/QcWlJEf5Yk", "6e5387db7249f6b0dc5b68eb095109157dc192a0"]];
+    const TEST_CASES: [[&str; 3]; 3] = [["film crazy soon outside stand loop subway crumble thrive popular green nuclear struggle pistol arm wife phrase warfare march wheat nephew ask sunny firm", "AN0JMHpDum3BhrVwnkylH0/HGRHBQ/fO/8+MYOawO8j6", "8867068daf9111ee013450eea1b1e10ffd62fc874329f0eadadd62b5617011e4"],
+    ["require decline left thought grid priority false tiny gasp angle royal system attack beef setup reward aunt skill wasp tray vital bounce inflict level", "AJrA997C1eVz6wYIp7bO8dpITSRBXpvg1m70/P3gusu2", "29bb131378438b6c7f50526e6a853a72ed97f10b75fc8127ca3faaf7e78add30"],
+    ["organ crash swim stick traffic remember army arctic mesh slice swear summer police vast chaos cradle squirrel hood useless evidence pet hub soap lake", "AAEMSIQeqyz09StSwuOW4MElQcZ+4jHW4/QcWlJEf5Yk", "6e5387db7249f6b0dc5b68eb095109157dc192a0392343d67688835fecdf14e4"]];
 
     for t in TEST_CASES {
         let mut keystore = Keystore::from(InMemKeystore::new(0));
@@ -201,7 +201,7 @@ fn test_mnemonics_secp256k1() -> Result<(), anyhow::Error> {
     keystore.addresses().iter().for_each(|addr| {
         assert_eq!(
             addr.to_string(),
-            "0xed17b3f435c03ff69c2cdc6d394932e68375f20f"
+            "0xed17b3f435c03ff69c2cdc6d394932e68375f20ff3576f626ed3e7994cf64a4e"
         );
     });
     Ok(())
