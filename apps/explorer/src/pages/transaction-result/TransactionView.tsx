@@ -426,7 +426,7 @@ function TransactionView({
     const gasPayment = gasData.payment;
     const gasBudget = gasData.budget;
 
-    const timestamp = transaction.timestamp_ms || transaction.timestampMs;
+    const timestamp = transaction.timestampMs;
 
     return (
         <div className={clsx(styles.txdetailsbg)}>

@@ -15,7 +15,6 @@ import {
   SuiAddress,
   SuiEventEnvelope,
   SuiEventFilter,
-  SuiExecuteTransactionResponse,
   SuiMoveFunctionArgTypes,
   SuiMoveNormalizedFunction,
   SuiMoveNormalizedModule,
@@ -658,7 +657,7 @@ export class JsonRpcProvider extends Provider {
     txnBytes: Uint8Array | string,
     signature: SerializedSignature,
     requestType: ExecuteTransactionRequestType = 'WaitForEffectsCert',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     try {
       return await this.client.requestWithType(
         'sui_executeTransactionSerializedSig',
@@ -667,7 +666,7 @@ export class JsonRpcProvider extends Provider {
           signature,
           requestType,
         ],
-        SuiExecuteTransactionResponse,
+        SuiTransactionResponse,
         this.options.skipDataValidation,
       );
     } catch (err) {

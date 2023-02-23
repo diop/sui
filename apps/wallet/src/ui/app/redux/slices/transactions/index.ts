@@ -1,7 +1,11 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { getTransactionDigest, Coin as CoinAPI } from '@mysten/sui.js';
+import {
+    getTransactionDigest,
+    Coin as CoinAPI,
+    type SuiTransactionResponse,
+} from '@mysten/sui.js';
 import {
     createAsyncThunk,
     createEntityAdapter,
@@ -15,11 +19,7 @@ import {
 } from '_redux/slices/account';
 import { fetchAllOwnedAndRequiredObjects } from '_redux/slices/sui-objects';
 
-import type {
-    SuiAddress,
-    SuiExecuteTransactionResponse,
-    SuiMoveObject,
-} from '@mysten/sui.js';
+import type { SuiAddress, SuiMoveObject } from '@mysten/sui.js';
 import type { RootState } from '_redux/RootReducer';
 import type { AppThunkConfig } from '_store/thunk-extras';
 
@@ -29,10 +29,9 @@ type SendTokensTXArgs = {
     recipientAddress: SuiAddress;
     gasBudget: number;
 };
-type TransactionResult = SuiExecuteTransactionResponse;
 
 export const sendTokens = createAsyncThunk<
-    TransactionResult,
+    SuiTransactionResponse,
     SendTokensTXArgs,
     AppThunkConfig
 >(
@@ -72,7 +71,7 @@ export const sendTokens = createAsyncThunk<
     }
 );
 
-const txAdapter = createEntityAdapter<TransactionResult>({
+const txAdapter = createEntityAdapter<SuiTransactionResponse>({
     selectId: (tx) => getTransactionDigest(tx),
 });
 

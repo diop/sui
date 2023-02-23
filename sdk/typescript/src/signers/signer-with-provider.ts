@@ -14,7 +14,7 @@ import {
   generateTransactionDigest,
   getTotalGasUsedUpperBound,
   SuiAddress,
-  SuiExecuteTransactionResponse,
+  SuiTransactionResponse,
   TransactionEffects,
   DevInspectResults,
   bcsForVersion,
@@ -133,7 +133,7 @@ export abstract class SignerWithProvider implements Signer {
   async signAndExecuteTransaction(
     transaction: Uint8Array | SignableTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     const { transactionBytes, signature } = await this.signTransaction(
       transaction,
     );
@@ -223,7 +223,7 @@ export abstract class SignerWithProvider implements Signer {
   async transferObject(
     transaction: TransferObjectTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'transferObject', data: transaction },
       requestType,
@@ -238,7 +238,7 @@ export abstract class SignerWithProvider implements Signer {
   async transferSui(
     transaction: TransferSuiTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'transferSui', data: transaction },
       requestType,
@@ -252,7 +252,7 @@ export abstract class SignerWithProvider implements Signer {
   async pay(
     transaction: PayTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'pay', data: transaction },
       requestType,
@@ -265,7 +265,7 @@ export abstract class SignerWithProvider implements Signer {
   async paySui(
     transaction: PaySuiTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'paySui', data: transaction },
       requestType,
@@ -278,7 +278,7 @@ export abstract class SignerWithProvider implements Signer {
   async payAllSui(
     transaction: PayAllSuiTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'payAllSui', data: transaction },
       requestType,
@@ -293,7 +293,7 @@ export abstract class SignerWithProvider implements Signer {
   async mergeCoin(
     transaction: MergeCoinTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'mergeCoin', data: transaction },
       requestType,
@@ -308,7 +308,7 @@ export abstract class SignerWithProvider implements Signer {
   async splitCoin(
     transaction: SplitCoinTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'splitCoin', data: transaction },
       requestType,
@@ -322,7 +322,7 @@ export abstract class SignerWithProvider implements Signer {
   async executeMoveCall(
     transaction: MoveCallTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'moveCall', data: transaction },
       requestType,
@@ -337,7 +337,7 @@ export abstract class SignerWithProvider implements Signer {
   async publish(
     transaction: PublishTransaction,
     requestType: ExecuteTransactionRequestType = 'WaitForLocalExecution',
-  ): Promise<SuiExecuteTransactionResponse> {
+  ): Promise<SuiTransactionResponse> {
     return this.signAndExecuteTransaction(
       { kind: 'publish', data: transaction },
       requestType,

@@ -40,7 +40,7 @@ type ReceiptCardProps = {
 
 function ReceiptCard({ txn, activeAddress }: ReceiptCardProps) {
     const { effects } = txn;
-    const timestamp = txn.timestamp_ms || txn.timestampMs;
+    const timestamp = txn.timestampMs;
     const executionStatus = getExecutionStatusType(txn);
     const error = useMemo(() => getExecutionStatusError(txn), [txn]);
     const isSuccessful = executionStatus === 'success';

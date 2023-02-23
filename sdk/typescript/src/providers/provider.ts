@@ -19,7 +19,6 @@ import {
   SuiEventEnvelope,
   SubscriptionId,
   ExecuteTransactionRequestType,
-  SuiExecuteTransactionResponse,
   TransactionDigest,
   ObjectId,
   SuiAddress,
@@ -45,6 +44,7 @@ import {
   CheckpointDigest,
   CheckPointContentsDigest,
   CommitteeInfo,
+  SuiTransactionResponse,
 } from '../types';
 
 import { DynamicFieldName, DynamicFieldPage } from '../types/dynamic_fields';
@@ -235,7 +235,7 @@ export abstract class Provider {
     txnBytes: Uint8Array | string,
     signature: SerializedSignature,
     requestType: ExecuteTransactionRequestType,
-  ): Promise<SuiExecuteTransactionResponse>;
+  ): Promise<SuiTransactionResponse>;
 
   // Move info
   /**

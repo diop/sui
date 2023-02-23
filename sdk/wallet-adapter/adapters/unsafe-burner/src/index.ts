@@ -4,7 +4,6 @@
 import {
   Ed25519Keypair,
   ExecuteTransactionRequestType,
-  getCertifiedTransaction,
   getTransactionEffects,
   JsonRpcProvider,
   LocalTxnDataSerializer,
@@ -58,17 +57,10 @@ export class UnsafeBurnerWalletAdapter implements WalletAdapter {
     transaction: SignableTransaction,
     options?: { requestType?: ExecuteTransactionRequestType }
   ) {
-    const response = await this.#signer.signAndExecuteTransaction(
+    return await this.#signer.signAndExecuteTransaction(
       transaction,
       options?.requestType
     );
-
-    return {
-      certificate: getCertifiedTransaction(response)!,
-      effects: getTransactionEffects(response)!,
-      timestamp_ms: null,
-      parsed_data: null,
-    };
   }
 
   async connect() {
