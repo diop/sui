@@ -1082,7 +1082,7 @@ impl AuthorityState {
             )
             .expect("We defined natives to not fail here"),
         );
-        let (_inner_temp_store, effects, execution_result) =
+        let (inner_temp_store, effects, execution_result) =
             execution_engine::execute_transaction_to_effects::<execution_mode::DevInspect, _>(
                 shared_object_refs,
                 temporary_store,
@@ -1096,7 +1096,12 @@ impl AuthorityState {
                 &epoch_store.epoch_start_configuration().epoch_data(),
                 protocol_config,
             );
-        DevInspectResults::new(effects, execution_result)
+        DevInspectResults::new(
+            effects,
+            inner_temp_store.events,
+            execution_result,
+            self.module_cache.as_ref(),
+        )
     }
 
     pub fn is_tx_already_executed(&self, digest: &TransactionDigest) -> SuiResult<bool> {

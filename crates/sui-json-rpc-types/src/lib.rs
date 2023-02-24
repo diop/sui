@@ -1902,6 +1902,8 @@ pub struct DevInspectResults {
     /// Note however, that not all dev-inspect transactions are actually usable as transactions so
     /// it might not be possible actually generate these effects from a normal transaction.
     pub effects: SuiTransactionEffects,
+    /// Events that likely would be generated if the transaction is actually run.
+    pub events: SuiTransactionEvents,
     /// Execution results (including return values) from executing the transactions
     /// Currently contains only return values from Move calls
     pub results: Result<Vec<(usize, SuiExecutionResult)>, String>,
@@ -1927,7 +1929,9 @@ type ExecutionResult = (
 impl DevInspectResults {
     pub fn new(
         effects: TransactionEffects,
+        events: TransactionEvents,
         return_values: Result<Vec<(usize, ExecutionResult)>, ExecutionError>,
+        resolver: &impl GetModule,
     ) -> Result<Self, anyhow::Error> {
         let results = match return_values {
             Err(e) => Err(format!("{}", e)),
@@ -1953,7 +1957,7 @@ impl DevInspectResults {
         };
         Ok(Self {
             effects: effects.into(),
-            //events: SuiTransactionEvents::try_from(events, resolver)?,
+            events: SuiTransactionEvents::try_from(events, resolver)?,
             results,
         })
     }

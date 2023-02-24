@@ -1057,7 +1057,6 @@ async fn test_execute_tx_with_serialized_signature() -> Result<(), anyhow::Error
 
         let SuiTransactionResponse {
             effects,
-            events: _,
             confirmed_local_execution,
             ..
         } = response;
@@ -1098,7 +1097,6 @@ async fn test_full_node_transaction_orchestrator_rpc_ok() -> Result<(), anyhow::
 
     let SuiTransactionResponse {
         effects,
-        events: _,
         confirmed_local_execution,
         ..
     } = response;
@@ -1124,7 +1122,6 @@ async fn test_full_node_transaction_orchestrator_rpc_ok() -> Result<(), anyhow::
 
     let SuiTransactionResponse {
         effects,
-        events: _,
         confirmed_local_execution,
         ..
     } = response;
