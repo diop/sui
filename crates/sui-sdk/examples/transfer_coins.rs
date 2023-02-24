@@ -32,12 +32,10 @@ async fn main() -> Result<(), anyhow::Error> {
         .transaction_builder()
         .transfer_sui(my_address, gas_object_id, 1000, recipient, Some(1000))
         .await?;
-    println!("!!!!transfer_tx: {:?}", &transfer_tx);
 
     // Sign transaction
     let keystore = Keystore::from(FileBasedKeystore::new(&keystore_path)?);
     let signature = keystore.sign_secure(&my_address, &transfer_tx, Intent::default())?;
-    println!("signature: {:?}", &signature);
 
     // Execute the transaction
     let transaction_response = sui
