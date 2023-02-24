@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { CoinFormat, useFormatCoin } from '@mysten/core';
 import {
     getMoveCallTransaction,
     getPublishTransaction,
@@ -43,7 +44,6 @@ import type { ReactNode } from 'react';
 
 import styles from './TransactionResult.module.css';
 
-import { CoinFormat, useFormatCoin } from '~/hooks/useFormatCoin';
 import { Banner } from '~/ui/Banner';
 import { DateCard } from '~/ui/DateCard';
 import { DescriptionList, DescriptionItem } from '~/ui/DescriptionList';

@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useCoinDecimals } from '@mysten/core';
 import {
     Coin as CoinAPI,
     SUI_TYPE_ARG,
@@ -23,7 +24,6 @@ import { parseAmount } from '_helpers';
 import {
     useAppSelector,
     useAppDispatch,
-    useCoinDecimals,
     useIndividualCoinMaxBalance,
 } from '_hooks';
 import {

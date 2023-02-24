@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useCoinDecimals, useFormatCoin } from '@mysten/core';
 import BigNumber from 'bignumber.js';
 import cl from 'classnames';
 import { Field, Form, useFormikContext } from 'formik';
@@ -13,7 +14,6 @@ import Alert from '_components/alert';
 import Icon, { SuiIcons } from '_components/icon';
 import LoadingIndicator from '_components/loading/LoadingIndicator';
 import { parseAmount } from '_helpers';
-import { useCoinDecimals, useFormatCoin } from '_hooks';
 import { GAS_SYMBOL, GAS_TYPE_ARG } from '_redux/slices/sui-objects/Coin';
 
 import type { FormValues } from '../';

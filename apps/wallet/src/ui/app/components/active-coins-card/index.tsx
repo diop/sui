@@ -1,12 +1,13 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useFormatCoin } from '@mysten/core';
 import cl from 'classnames';
 import { useMemo, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 
 import Icon, { SuiIcons } from '_components/icon';
-import { useAppSelector, useFormatCoin } from '_hooks';
+import { useAppSelector } from '_hooks';
 import { accountAggregateBalancesSelector } from '_redux/slices/account';
 import { GAS_TYPE_ARG, Coin } from '_redux/slices/sui-objects/Coin';
 

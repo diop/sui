@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useRpcClient } from '@mysten/core';
 import {
     isValidTransactionDigest,
     isValidSuiAddress,
@@ -13,7 +14,6 @@ import {
 } from '@mysten/sui.js';
 import { useQuery } from '@tanstack/react-query';
 
-import { useRpc } from '~/hooks/useRpc';
 import { isGenesisLibAddress } from '~/utils/api/searchUtil';
 
 type Result = {
@@ -85,7 +85,7 @@ const getResultsForAddress = async (rpc: JsonRpcProvider, query: string) => {
 };
 
 export function useSearch(query: string) {
-    const rpc = useRpc();
+    const rpc = useRpcClient();
 
     return useQuery(
         ['search', query],

@@ -1,6 +1,7 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
+import { useCoinDecimals } from '@mysten/core';
 import cl from 'classnames';
 import { Field, Form, useFormikContext } from 'formik';
 import { useEffect, useRef, memo } from 'react';
@@ -12,7 +13,6 @@ import Alert from '_components/alert';
 import Icon, { SuiIcons } from '_components/icon';
 import NumberInput from '_components/number-input';
 import { parseAmount } from '_helpers';
-import { useCoinDecimals } from '_hooks';
 
 import type { FormValues } from '../';
 
