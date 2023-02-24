@@ -230,7 +230,7 @@ async fn test_dry_run_transaction() {
         )
         .await
         .unwrap();
-    assert_eq!(response.status, SuiExecutionStatus::Success);
+    assert_eq!(response.effects.status, SuiExecutionStatus::Success);
 
     // Make sure that objects are not mutated after dry run.
     let gas_object_version = fullnode

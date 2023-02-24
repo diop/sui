@@ -17,7 +17,7 @@ use sui_core::authority::{AuthorityState, AuthorityStore, ResolverWrapper};
 use sui_core::authority_client::NetworkAuthorityClient;
 use sui_core::transaction_orchestrator::TransactiondOrchestrator;
 use sui_json_rpc_types::{
-    DevInspectResults, SuiTransactionEffects, SuiTransactionEvents, SuiTransactionResponse,
+    DevInspectResults, DryRunTransactionResponse, SuiTransactionEvents, SuiTransactionResponse,
 };
 use sui_open_rpc::Module;
 use sui_types::base_types::{EpochId, SuiAddress};
@@ -132,7 +132,7 @@ impl WriteApiServer for TransactionExecutionApi {
             .await?)
     }
 
-    async fn dry_run_transaction(&self, tx_bytes: Base64) -> RpcResult<SuiTransactionEffects> {
+    async fn dry_run_transaction(&self, tx_bytes: Base64) -> RpcResult<DryRunTransactionResponse> {
         let (txn_data, txn_digest) = get_transaction_data_and_digest(tx_bytes)?;
         Ok(self
             .state

@@ -29,10 +29,10 @@ export function useTransactionSummary({
     const { data } = useTransactionDryRun(txData);
 
     const eventsSummary = useMemo(
-        () => (data ? getEventsSummary(data, activeAddress) : null),
+        () => (data ? getEventsSummary(data.events, activeAddress) : null),
         [data, activeAddress]
     );
-    const txGasEstimation = data && getTotalGasUsed(data);
+    const txGasEstimation = data && getTotalGasUsed(data.effects);
 
     return [eventsSummary, txGasEstimation || null];
 }

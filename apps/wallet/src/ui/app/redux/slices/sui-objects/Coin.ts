@@ -1,7 +1,11 @@
 // Copyright (c) Mysten Labs, Inc.
 // SPDX-License-Identifier: Apache-2.0
 
-import { Coin as CoinAPI, getTransactionEffects } from '@mysten/sui.js';
+import {
+    Coin as CoinAPI,
+    getEvents,
+    getTransactionEffects,
+} from '@mysten/sui.js';
 import * as Sentry from '@sentry/react';
 
 import type {
@@ -185,12 +189,13 @@ export class Coin {
             });
 
             const effects = getTransactionEffects(result);
+            const events = getEvents(result);
 
-            if (!effects || !effects.events) {
+            if (!effects || !events) {
                 throw new Error('Missing effects or events');
             }
 
-            const changeEvent = effects.events.find((event) => {
+            const changeEvent = events.find((event) => {
                 if ('coinBalanceChange' in event) {
                     return event.coinBalanceChange.amount === Number(amount);
                 }

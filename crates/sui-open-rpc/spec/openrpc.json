@@ -222,10 +222,10 @@
         }
       ],
       "result": {
-        "name": "SuiTransactionEffects",
+        "name": "DryRunTransactionResponse",
         "required": true,
         "schema": {
-          "$ref": "#/components/schemas/TransactionEffects"
+          "$ref": "#/components/schemas/DryRunTransactionResponse"
         }
       }
     },
@@ -364,7 +364,7 @@
                   }
                 },
                 "eventsSummary": {
-                  "event_count": 5,
+                  "eventCount": 5,
                   "digest": "6YfuPiHAxSrGMbFYN6AJEEHuP7LHTXzA6wHvxAhdLJdG"
                 }
               },
@@ -1626,7 +1626,7 @@
                   }
                 },
                 "eventsSummary": {
-                  "event_count": 5,
+                  "eventCount": 5,
                   "digest": "E3dSj5imFCTb5QUaaM2RKkmM2FUszD99qvfcNiUVqBBv"
                 }
               },
@@ -2604,7 +2604,7 @@
                   }
                 },
                 "eventsSummary": {
-                  "event_count": 5,
+                  "eventCount": 5,
                   "digest": "4oDBSrdDb2UM59Td5EyPhYP1h1TSphnjfSpoLnWKaM5o"
                 }
               },
@@ -3401,6 +3401,24 @@
                 "$ref": "#/components/schemas/Result_of_Array_of_Tuple_of_uint_and_SuiExecutionResult_or_String"
               }
             ]
+          }
+        }
+      },
+      "DryRunTransactionResponse": {
+        "type": "object",
+        "required": [
+          "effects",
+          "events"
+        ],
+        "properties": {
+          "effects": {
+            "$ref": "#/components/schemas/TransactionEffects"
+          },
+          "events": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
           }
         }
       },
@@ -4352,7 +4370,7 @@
       "EventsSummary": {
         "type": "object",
         "required": [
-          "event_count"
+          "eventCount"
         ],
         "properties": {
           "digest": {
@@ -4365,7 +4383,7 @@
               }
             ]
           },
-          "event_count": {
+          "eventCount": {
             "type": "integer",
             "format": "uint",
             "minimum": 0.0

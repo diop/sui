@@ -50,8 +50,8 @@ use narwhal_config::{
 use sui_adapter::{adapter, execution_mode};
 use sui_config::genesis::Genesis;
 use sui_json_rpc_types::{
-    type_and_fields_from_move_struct, DevInspectResults, SuiEvent, SuiEventEnvelope, SuiMoveValue,
-    SuiTransactionEffects,
+    type_and_fields_from_move_struct, DevInspectResults, DryRunTransactionResponse, SuiEvent,
+    SuiEventEnvelope, SuiMoveValue, SuiTransactionEvents,
 };
 use sui_macros::nondeterministic;
 use sui_protocol_config::SupportedProtocolVersions;
@@ -970,7 +970,7 @@ impl AuthorityState {
         &self,
         transaction: TransactionData,
         transaction_digest: TransactionDigest,
-    ) -> Result<SuiTransactionEffects, anyhow::Error> {
+    ) -> Result<DryRunTransactionResponse, anyhow::Error> {
         let epoch_store = self.load_epoch_store_one_call_per_task();
         if !self.is_fullnode(&epoch_store) {
             return Err(anyhow!("dry-exec is only support on fullnodes"));
@@ -1000,7 +1000,7 @@ impl AuthorityState {
             )
             .expect("We defined natives to not fail here"),
         );
-        let (_inner_temp_store, effects, _execution_error) =
+        let (inner_temp_store, effects, _execution_error) =
             execution_engine::execute_transaction_to_effects::<execution_mode::Normal, _>(
                 shared_object_refs,
                 temporary_store,
@@ -1014,7 +1014,13 @@ impl AuthorityState {
                 &epoch_store.epoch_start_configuration().epoch_data(),
                 epoch_store.protocol_config(),
             );
-        Ok(effects.into())
+        Ok(DryRunTransactionResponse {
+            effects: effects.into(),
+            events: SuiTransactionEvents::try_from(
+                inner_temp_store.events,
+                self.module_cache.as_ref(),
+            )?,
+        })
     }
 
     /// The object ID for gas can be any object ID, even for an uncreated object

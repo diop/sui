@@ -31,7 +31,6 @@ import {
   RpcApiVersion,
   FaucetResponse,
   Order,
-  TransactionEffects,
   CoinMetadata,
   DevInspectResults,
   SuiSystemState,
@@ -46,6 +45,7 @@ import {
   CheckPointContentsDigest,
   Checkpoint,
   CommitteeInfo,
+  DryRunTransactionResponse,
 } from '../types';
 
 import { DynamicFieldName, DynamicFieldPage } from '../types/dynamic_fields';
@@ -336,7 +336,9 @@ export abstract class Provider {
    * gas budget and the transaction effects
    * @param txBytes
    */
-  abstract dryRunTransaction(txBytes: Uint8Array): Promise<TransactionEffects>;
+  abstract dryRunTransaction(
+    txBytes: Uint8Array,
+  ): Promise<DryRunTransactionResponse>;
 
   /**
    * Return the list of dynamic field objects owned by an object

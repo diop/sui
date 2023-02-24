@@ -84,7 +84,7 @@ async fn test_public_transfer_object() -> Result<(), anyhow::Error> {
 
     let SuiTransactionResponse { effects, .. } = tx_response;
     assert_eq!(
-        dryrun_response.transaction_digest,
+        dryrun_response.effects.transaction_digest,
         effects.transaction_digest
     );
     Ok(())
