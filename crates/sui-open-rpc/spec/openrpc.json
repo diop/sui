@@ -3375,6 +3375,7 @@
         "type": "object",
         "required": [
           "effects",
+          "events",
           "results"
         ],
         "properties": {
@@ -3385,6 +3386,13 @@
                 "$ref": "#/components/schemas/TransactionEffects"
               }
             ]
+          },
+          "events": {
+            "description": "Events that likely would be generated if the transaction is actually run.",
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Event"
+            }
           },
           "results": {
             "description": "Execution results (including return values) from executing the transactions Currently contains only return values from Move calls",
