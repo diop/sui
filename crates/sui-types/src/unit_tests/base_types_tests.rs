@@ -180,13 +180,6 @@ fn test_object_id_deserialize_from_json_value() {
 
 #[test]
 fn test_object_id_serde_json() {
-    let arr = vec![
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
-        255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 254,
-    ];
-    let address = SuiAddress::try_from(arr).unwrap();
-    println!("!!!address: {:?}", address);
-
     let hex = format!("0x{}", SAMPLE_ADDRESS);
     let json_hex = format!("\"0x{}\"", SAMPLE_ADDRESS);
 
