@@ -22,7 +22,7 @@ import {
   ObjectOwner,
   SuiAddress,
   SuiJsonValue,
-  TransactionDigest,
+  TransactionDigest, TransactionEventDigest,
 } from './common';
 
 // TODO: support u64
@@ -158,6 +158,12 @@ export const GasCostSummary = object({
 });
 export type GasCostSummary = Infer<typeof GasCostSummary>;
 
+export const EventsSummary = object({
+  eventCount: number(),
+  digest: optional(TransactionEventDigest),
+});
+export type EventsSummary = Infer<typeof EventsSummary>;
+
 export const ExecutionStatusType = union([
   literal('success'),
   literal('failure'),
@@ -212,7 +218,7 @@ export const TransactionEffects = object({
    */
   gasObject: OwnedObjectRef,
   /** The events emitted during execution. Note that only successful transactions emit events */
-  events: optional(array(SuiEvent)),
+  eventsSummary: EventsSummary,
   /** The set of transaction digests this transaction depends on */
   dependencies: optional(array(TransactionDigest)),
 });
@@ -348,6 +354,7 @@ export const SuiTransactionResponse = object({
   // TODO: Remove after devnet 0.28.0
   certificate: optional(CertifiedTransaction),
   effects: TransactionEffects,
+  events: optional(array(SuiEvent)),
   // TODO: Remove after devnet 0.28.0
   timestamp_ms: optional(union([number(), literal(null)])),
   // TODO: Remove optional after devnet 0.28.0
@@ -620,7 +627,10 @@ export function getTransactionEffects(
 export function getEvents(
   data: SuiExecuteTransactionResponse | SuiTransactionResponse,
 ): SuiEvent[] | undefined {
-  return getTransactionEffects(data)?.events;
+  if ('events' in data) {
+    return data.events;
+  }
+  return undefined;
 }
 
 export function getCreatedObjects(
