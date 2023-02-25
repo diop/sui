@@ -253,7 +253,7 @@ pub async fn metadata(
                     coins,
                     locked_until_epoch: *locked_until_epoch,
                 },
-                data.gas(),
+                data.gas()[0],
                 13000,
             )
         }

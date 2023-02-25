@@ -770,9 +770,8 @@ fn create_genesis_transaction(
                 .expect("We defined natives to not fail here"),
         );
 
-        let transaction_data = genesis_transaction.data().intent_message.value.clone();
-        let signer = transaction_data.sender();
-        let gas = transaction_data.gas();
+        let transaction_data = &genesis_transaction.data().intent_message.value;
+        let (kind, signer, gas) = transaction_data.execution_parts();
         let (inner_temp_store, effects, _execution_error) =
             sui_adapter::execution_engine::execute_transaction_to_effects::<
                 execution_mode::Normal,
@@ -780,9 +779,9 @@ fn create_genesis_transaction(
             >(
                 vec![],
                 temporary_store,
-                transaction_data.kind,
+                kind,
                 signer,
-                gas,
+                &gas,
                 *genesis_transaction.digest(),
                 Default::default(),
                 &move_vm,
@@ -1116,9 +1115,8 @@ mod test {
                 .expect("We defined natives to not fail here"),
         );
 
-        let transaction_data = genesis_transaction.data().intent_message.value.clone();
-        let signer = transaction_data.sender();
-        let gas = transaction_data.gas();
+        let transaction_data = &genesis_transaction.data().intent_message.value;
+        let (kind, signer, gas) = transaction_data.execution_parts();
         let (_inner_temp_store, effects, _execution_error) =
             sui_adapter::execution_engine::execute_transaction_to_effects::<
                 execution_mode::Normal,
@@ -1126,9 +1124,9 @@ mod test {
             >(
                 vec![],
                 temporary_store,
-                transaction_data.kind,
+                kind,
                 signer,
-                gas,
+                &gas,
                 *genesis_transaction.digest(),
                 Default::default(),
                 &move_vm,
