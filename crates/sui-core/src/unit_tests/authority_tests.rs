@@ -4639,7 +4639,8 @@ fn test_choose_next_system_packages() {
     let v = &committee.voting_rights;
     let mut protocol_config = ProtocolConfig::get_for_max_version();
 
-    // all validators agree.
+    // all validators agree on new system packages, but without a new protocol version, so no
+    // upgrade.
     let capabilities = vec![
         make_capabilities!(1, v[0].0, vec![o1, o2]),
         make_capabilities!(1, v[1].0, vec![o1, o2]),
@@ -4648,7 +4649,7 @@ fn test_choose_next_system_packages() {
     ];
 
     assert_eq!(
-        (ver(1), sort(vec![o1, o2])),
+        (ver(1), vec![]),
         AuthorityState::choose_protocol_version_and_system_packages(
             &committee,
             &protocol_config,
@@ -4658,10 +4659,10 @@ fn test_choose_next_system_packages() {
 
     // one validator disagrees, stake buffer means no upgrade
     let capabilities = vec![
-        make_capabilities!(1, v[0].0, vec![o1, o2]),
-        make_capabilities!(1, v[1].0, vec![o1, o2]),
-        make_capabilities!(1, v[2].0, vec![o1, o2]),
-        make_capabilities!(1, v[3].0, vec![o1, o3]),
+        make_capabilities!(2, v[0].0, vec![o1, o2]),
+        make_capabilities!(2, v[1].0, vec![o1, o2]),
+        make_capabilities!(2, v[2].0, vec![o1, o2]),
+        make_capabilities!(2, v[3].0, vec![o1, o3]),
     ];
 
     assert_eq!(
@@ -4677,7 +4678,7 @@ fn test_choose_next_system_packages() {
     protocol_config.set_buffer_stake_for_protocol_upgrade_bps_for_testing(0);
 
     assert_eq!(
-        (ver(1), sort(vec![o1, o2])),
+        (ver(2), sort(vec![o1, o2])),
         AuthorityState::choose_protocol_version_and_system_packages(
             &committee,
             &protocol_config,
@@ -4687,10 +4688,10 @@ fn test_choose_next_system_packages() {
 
     // committee is split, can't upgrade even with 0 stake buffer
     let capabilities = vec![
-        make_capabilities!(1, v[0].0, vec![o1, o2]),
-        make_capabilities!(1, v[1].0, vec![o1, o2]),
-        make_capabilities!(1, v[2].0, vec![o1, o3]),
-        make_capabilities!(1, v[3].0, vec![o1, o3]),
+        make_capabilities!(2, v[0].0, vec![o1, o2]),
+        make_capabilities!(2, v[1].0, vec![o1, o2]),
+        make_capabilities!(2, v[2].0, vec![o1, o3]),
+        make_capabilities!(2, v[3].0, vec![o1, o3]),
     ];
 
     assert_eq!(
