@@ -159,12 +159,6 @@ export const GasCostSummary = object({
 });
 export type GasCostSummary = Infer<typeof GasCostSummary>;
 
-export const EventsSummary = object({
-  eventCount: number(),
-  digest: optional(TransactionEventDigest),
-});
-export type EventsSummary = Infer<typeof EventsSummary>;
-
 export const ExecutionStatusType = union([
   literal('success'),
   literal('failure'),
@@ -219,7 +213,7 @@ export const TransactionEffects = object({
    */
   gasObject: OwnedObjectRef,
   /** The events emitted during execution. Note that only successful transactions emit events */
-  eventsSummary: EventsSummary,
+  eventsDigest: optional(TransactionEventDigest),
   /** The set of transaction digests this transaction depends on */
   dependencies: optional(array(TransactionDigest)),
 });
