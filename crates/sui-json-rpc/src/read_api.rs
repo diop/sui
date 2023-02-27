@@ -154,15 +154,16 @@ impl ReadApiServer for ReadApi {
             .tap_err(|err| debug!(tx_digest=?digest, "Failed to get transaction: {:?}", err))?;
         let checkpoint = self
             .state
-            .database
             .get_transaction_checkpoint(&digest)
             .map_err(|e| anyhow!("{e}"))?;
+        let checkpoint_timestamp = checkpoint.as_ref().map(|c| c.summary.timestamp_ms);
+
         Ok(SuiTransactionResponse {
             transaction: transaction.into_message().try_into()?,
             effects: SuiTransactionEffects::try_from(effects, self.state.module_cache.as_ref())?,
-            timestamp_ms: self.state.get_timestamp_ms(&digest).await?,
+            timestamp_ms: checkpoint_timestamp,
             confirmed_local_execution: None,
-            checkpoint: checkpoint.map(|(_epoch, checkpoint)| checkpoint),
+            checkpoint: checkpoint.map(|c| c.summary.sequence_number),
         })
     }
 

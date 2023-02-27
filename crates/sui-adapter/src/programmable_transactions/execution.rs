@@ -19,18 +19,18 @@ use move_vm_runtime::{
     session::{LoadedFunctionInstantiation, SerializedReturnValues},
 };
 use move_vm_types::loaded_data::runtime_types::{StructType, Type};
-use sui_cost_tables::bytecode_tables::GasStatus;
 use sui_protocol_config::ProtocolConfig;
 use sui_types::{
     balance::Balance,
     base_types::{ObjectID, SuiAddress, TxContext, TX_CONTEXT_MODULE_NAME, TX_CONTEXT_STRUCT_NAME},
     coin::Coin,
     error::{ExecutionError, ExecutionErrorKind},
+    event::Event,
+    gas::SuiGasStatus,
     id::UID,
     messages::{
         Argument, Command, EntryArgumentErrorKind, ProgrammableMoveCall, ProgrammableTransaction,
     },
-    object::Owner,
     SUI_FRAMEWORK_ADDRESS,
 };
 use sui_verifier::{
@@ -50,8 +50,8 @@ pub fn execute<E: fmt::Debug, S: StorageView<E>>(
     protocol_config: &ProtocolConfig,
     vm: &MoveVM,
     state_view: &mut S,
-    ctx: &mut TxContext,
-    gas_status: &mut GasStatus,
+    tx_context: &mut TxContext,
+    gas_status: &mut SuiGasStatus,
     gas_coin: ObjectID,
     pt: ProgrammableTransaction,
 ) -> Result<(), ExecutionError> {
@@ -60,13 +60,29 @@ pub fn execute<E: fmt::Debug, S: StorageView<E>>(
         protocol_config,
         vm,
         state_view,
-        ctx,
+        tx_context,
         gas_status,
         gas_coin,
         inputs,
     )?;
-    for command in commands {
-        execute_command(&mut context, command)?;
+    // execute commands
+    for (idx, command) in commands.into_iter().enumerate() {
+        execute_command(&mut context, command).map_err(|e| e.with_command_index(idx))?;
+    }
+    // apply changes
+    let ExecutionResults {
+        object_changes,
+        user_events,
+    } = context.finish()?;
+    state_view.apply_object_changes(object_changes);
+    for (module_id, tag, contents) in user_events {
+        state_view.log_event(Event::move_event(
+            module_id.address(),
+            module_id.name(),
+            tx_context.sender(),
+            tag,
+            contents,
+        ))
     }
     Ok(())
 }
@@ -207,6 +223,7 @@ fn execute_move_call<E: fmt::Debug, S: StorageView<E>>(
         }
     }
 
+    context.take_user_events(module_id)?;
     assert_invariant!(
         return_value_kinds.len() == return_values.len(),
         "lost return value"
@@ -227,11 +244,9 @@ fn make_value(
 ) -> Result<Value, ExecutionError> {
     Ok(match value_info {
         ValueKind::Object {
-            owner,
             type_,
             has_public_transfer,
         } => Value::Object(ObjectValue::new(
-            owner,
             type_,
             has_public_transfer,
             is_return_value,
@@ -305,7 +320,7 @@ fn vm_move_call<E: fmt::Debug, S: StorageView<E>>(
             function,
             type_arguments,
             serialized_arguments,
-            context.gas_status,
+            context.gas_status.create_move_gas_status(),
         )
         .map_err(|e| context.convert_vm_error(e))?;
 
@@ -364,7 +379,7 @@ fn publish_and_verify_modules<E: fmt::Debug, S: StorageView<E>>(
             AccountAddress::from(package_id),
             // TODO: publish_module_bundle() currently doesn't charge gas.
             // Do we want to charge there?
-            context.gas_status,
+            context.gas_status.create_move_gas_status(),
         )
         .map_err(|e| context.convert_vm_error(e))?;
 
@@ -393,7 +408,6 @@ enum FunctionKind {
 /// Used to remember type information about a type when resolving the signature
 enum ValueKind {
     Object {
-        owner: Option<Owner>,
         type_: StructTag,
         has_public_transfer: bool,
     },
@@ -504,7 +518,6 @@ fn check_non_entry_signature<E: fmt::Debug, S: StorageView<E>>(
                         invariant_violation!("Struct type make a non struct type tag")
                     };
                     ValueKind::Object {
-                        owner: None,
                         type_: *struct_tag,
                         has_public_transfer: abilities.has_store(),
                     }
@@ -591,14 +604,12 @@ fn build_move_args<E: fmt::Debug, S: StorageView<E>>(
             Type::MutableReference(inner) => {
                 let value = context.borrow_arg_mut(idx, arg)?;
                 let object_info = if let Value::Object(ObjectValue {
-                    owner,
                     type_,
                     has_public_transfer,
                     ..
                 }) = &value
                 {
                     ValueKind::Object {
-                        owner: *owner,
                         type_: type_.clone(),
                         has_public_transfer: *has_public_transfer,
                     }

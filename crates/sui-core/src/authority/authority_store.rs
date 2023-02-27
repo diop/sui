@@ -15,10 +15,13 @@ use std::path::Path;
 use std::sync::Arc;
 use sui_storage::mutex_table::{LockGuard, MutexTable};
 use sui_types::accumulator::Accumulator;
+use sui_types::error::UserInputError;
 use sui_types::message_envelope::Message;
 use sui_types::object::Owner;
-use sui_types::object::PACKAGE_VERSION;
-use sui_types::storage::{BackingPackageStore, ChildObjectResolver, DeleteKind, ObjectKey};
+use sui_types::storage::{
+    BackingPackageStore, ChildObjectResolver, DeleteKind, ObjectKey, ObjectStore,
+};
+use sui_types::sui_system_state::get_sui_system_state;
 use sui_types::{base_types::SequenceNumber, fp_bail, fp_ensure, storage::ParentSync};
 use tokio::sync::{RwLock, RwLockReadGuard, RwLockWriteGuard};
 use tracing::{debug, info, trace};
@@ -298,7 +301,7 @@ impl AuthorityStore {
 
     /// Read an object and return it, or Ok(None) if the object was not found.
     pub fn get_object(&self, object_id: &ObjectID) -> Result<Option<Object>, SuiError> {
-        self.perpetual_tables.get_object(object_id)
+        self.perpetual_tables.as_ref().get_object(object_id)
     }
 
     /// Get many objects
@@ -310,13 +313,11 @@ impl AuthorityStore {
         Ok(result)
     }
 
-    // Transaction input errors should be aggregated in TransactionInputObjectsErrors
     pub fn check_input_objects(
         &self,
         objects: &[InputObjectKind],
     ) -> Result<Vec<Object>, SuiError> {
         let mut result = Vec::new();
-        let mut errors = Vec::new();
         for kind in objects {
             let obj = match kind {
                 InputObjectKind::MovePackage(id) | InputObjectKind::SharedMoveObject { id, .. } => {
@@ -325,17 +326,11 @@ impl AuthorityStore {
                 InputObjectKind::ImmOrOwnedMoveObject(objref) => {
                     self.get_object_by_key(&objref.0, objref.1)?
                 }
-            };
-            match obj {
-                Some(obj) => result.push(obj),
-                None => errors.push(kind.object_not_found_error()),
             }
+            .ok_or_else(|| SuiError::from(kind.object_not_found_error()))?;
+            result.push(obj);
         }
-        if !errors.is_empty() {
-            Err(SuiError::TransactionInputObjectsErrors { errors })
-        } else {
-            Ok(result)
-        }
+        Ok(result)
     }
 
     /// When making changes, please see if check_sequenced_input_objects() below needs
@@ -345,7 +340,7 @@ impl AuthorityStore {
         digest: &TransactionDigest,
         objects: &[InputObjectKind],
         epoch_store: &AuthorityPerEpochStore,
-    ) -> Result<Vec<ObjectKey>, SuiError> {
+    ) -> Result<Vec<InputKey>, SuiError> {
         let shared_locks_cell: OnceCell<HashMap<_, _>> = OnceCell::new();
 
         let mut missing = Vec::new();
@@ -360,26 +355,28 @@ impl AuthorityStore {
                     // If we can't find the locked version, it means
                     // 1. either we have a bug that skips shared object version assignment
                     // 2. or we have some DB corruption
-                    let version = shared_locks.get(id).unwrap_or_else(|| {
+                    let Some(version) = shared_locks.get(id) else {
                         panic!(
-                        "Shared object locks should have been set. tx_digset: {:?}, obj id: {:?}",
-                        digest, id
-                    )
-                    });
+                            "Shared object locks should have been set. tx_digset: {digest:?}, obj \
+                             id: {id:?}",
+                        )
+                    };
+
                     if !self.object_version_exists(id, *version)? {
-                        // When this happens, other transactions that use smaller versions of
-                        // this shared object haven't finished execution.
-                        missing.push(ObjectKey(*id, *version));
+                        // When this happens, other transactions that use smaller versions of this
+                        // shared object haven't finished execution.
+                        missing.push(InputKey(*id, Some(*version)));
                     }
                 }
                 InputObjectKind::MovePackage(id) => {
-                    if !self.object_version_exists(id, PACKAGE_VERSION)? {
-                        missing.push(ObjectKey(*id, PACKAGE_VERSION));
+                    if !self.object_exists(*id)? {
+                        // The cert cannot have been formed if the package was missing.
+                        missing.push(InputKey(*id, None));
                     }
                 }
                 InputObjectKind::ImmOrOwnedMoveObject(objref) => {
                     if self.get_object_by_key(&objref.0, objref.1)?.is_none() {
-                        missing.push(ObjectKey::from(objref));
+                        missing.push(InputKey(objref.0, Some(objref.1)));
                     }
                 }
             };
@@ -716,7 +713,7 @@ impl AuthorityStore {
             // 4. Locks may have existed when we started processing this tx, but could have since
             //    been deleted by a concurrent tx that finished first. In that case, check if the
             //    tx effects exist.
-            self.check_locks_exist(&owned_inputs)?;
+            self.check_owned_object_locks_exist(&owned_inputs)?;
         }
 
         write_batch = self.initialize_locks_impl(write_batch, &new_locks_to_init, false)?;
@@ -726,8 +723,8 @@ impl AuthorityStore {
     /// Acquires a lock for a transaction on the given objects if they have all been initialized previously
     /// to None state.  It is also OK if they have been set to the same transaction.
     /// The locks are all set to the given transaction digest.
-    /// Returns SuiError::ObjectNotFound if no lock record can be found for one of the objects.
-    /// Returns SuiError::ObjectVersionUnavailableForConsumption if one of the objects is not locked at the given version.
+    /// Returns UserInputError::ObjectNotFound if no lock record can be found for one of the objects.
+    /// Returns UserInputError::ObjectVersionUnavailableForConsumption if one of the objects is not locked at the given version.
     /// Returns SuiError::ObjectLockConflict if one of the objects is locked by a different transaction in the same epoch.
     /// Returns SuiError::ObjectLockedAtFutureEpoch if one of the objects is locked in a future epoch (bug).
     pub(crate) async fn acquire_transaction_locks(
@@ -754,10 +751,11 @@ impl AuthorityStore {
             let lock = lock.as_ref();
             if lock.is_none() {
                 let latest_lock = self.get_latest_lock_for_object_id(obj_ref.0)?;
-                fp_bail!(SuiError::ObjectVersionUnavailableForConsumption {
+                fp_bail!(UserInputError::ObjectVersionUnavailableForConsumption {
                     provided_obj_ref: *obj_ref,
                     current_version: latest_lock.1
-                });
+                }
+                .into());
             }
             // Safe to unwrap as it is checked above
             let lock = lock.unwrap();
@@ -816,7 +814,7 @@ impl AuthorityStore {
     }
 
     /// Gets ObjectLockInfo that represents state of lock on an object.
-    /// Returns SuiError::ObjectNotFound if cannot find lock record for this object
+    /// Returns UserInputError::ObjectNotFound if cannot find lock record for this object
     pub(crate) fn get_lock(&self, obj_ref: ObjectRef, epoch_id: EpochId) -> SuiLockResult {
         Ok(
             if let Some(lock_info) = self
@@ -854,7 +852,7 @@ impl AuthorityStore {
         )
     }
 
-    /// Returns SuiError::ObjectNotFound if no lock records found for this object.
+    /// Returns UserInputError::ObjectNotFound if no lock records found for this object.
     fn get_latest_lock_for_object_id(&self, object_id: ObjectID) -> SuiResult<ObjectRef> {
         let mut iterator = self
             .perpetual_tables
@@ -871,18 +869,20 @@ impl AuthorityStore {
                     None
                 }
             })
-            .ok_or(SuiError::ObjectNotFound {
-                object_id,
-                version: None,
+            .ok_or_else(|| {
+                SuiError::from(UserInputError::ObjectNotFound {
+                    object_id,
+                    version: None,
+                })
             })?
             .0)
     }
 
     /// Checks multiple object locks exist.
-    /// Returns SuiError::ObjectNotFound if cannot find lock record for at least one of the objects.
-    /// Returns SuiError::ObjectVersionUnavailableForConsumption if at least one object lock is not initialized
+    /// Returns UserInputError::ObjectNotFound if cannot find lock record for at least one of the objects.
+    /// Returns UserInputError::ObjectVersionUnavailableForConsumption if at least one object lock is not initialized
     ///     at the given version.
-    pub fn check_locks_exist(&self, objects: &[ObjectRef]) -> SuiResult {
+    pub fn check_owned_object_locks_exist(&self, objects: &[ObjectRef]) -> SuiResult {
         let locks = self
             .perpetual_tables
             .owned_object_transaction_locks
@@ -890,13 +890,13 @@ impl AuthorityStore {
         for (lock, obj_ref) in locks.into_iter().zip(objects) {
             if lock.is_none() {
                 let latest_lock = self.get_latest_lock_for_object_id(obj_ref.0)?;
-                fp_bail!(SuiError::ObjectVersionUnavailableForConsumption {
+                fp_bail!(UserInputError::ObjectVersionUnavailableForConsumption {
                     provided_obj_ref: *obj_ref,
                     current_version: latest_lock.1
-                });
+                }
+                .into());
             }
         }
-        debug!(?objects, "locks_exist: all locks do exist");
         Ok(())
     }
 
@@ -1150,8 +1150,9 @@ impl AuthorityStore {
             .map(|v| v.map(|v| v.into()))
     }
 
+    // TODO: Transaction Orchestrator also calls this, which is not ideal.
     pub fn get_sui_system_state_object(&self) -> SuiResult<SuiSystemState> {
-        self.perpetual_tables.get_sui_system_state_object()
+        get_sui_system_state(self.perpetual_tables.as_ref())
     }
 
     pub fn iter_live_object_set(&self) -> impl Iterator<Item = ObjectRef> + '_ {
@@ -1252,3 +1253,7 @@ pub struct LockDetails {
     pub epoch: EpochId,
     pub tx_digest: TransactionDigest,
 }
+
+/// A potential input to a transaction.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+pub struct InputKey(pub ObjectID, pub Option<SequenceNumber>);

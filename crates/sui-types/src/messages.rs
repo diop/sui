@@ -11,8 +11,10 @@ use crate::crypto::{
 use crate::gas::GasCostSummary;
 use crate::intent::{Intent, IntentMessage};
 use crate::message_envelope::{Envelope, Message, TrustedEnvelope, VerifiedEnvelope};
-use crate::messages_checkpoint::{CheckpointSequenceNumber, CheckpointSignatureMessage};
-use crate::object::{MoveObject, Object, ObjectFormatOptions, Owner, PACKAGE_VERSION};
+use crate::messages_checkpoint::{
+    CheckpointSequenceNumber, CheckpointSignatureMessage, CheckpointTimestamp,
+};
+use crate::object::{MoveObject, Object, ObjectFormatOptions, Owner};
 use crate::signature::{AuthenticatorTrait, GenericSignature};
 use crate::storage::{DeleteKind, WriteKind};
 use crate::{
@@ -49,23 +51,11 @@ use tracing::debug;
 
 pub const DUMMY_GAS_PRICE: u64 = 1;
 
-const BLOCKED_MOVE_FUNCTIONS: [(ObjectID, &str, &str); 3] = [
-    (
-        SUI_FRAMEWORK_OBJECT_ID,
-        "sui_system",
-        "request_add_validator",
-    ),
-    (
-        SUI_FRAMEWORK_OBJECT_ID,
-        "sui_system",
-        "request_remove_validator",
-    ),
-    (
-        SUI_FRAMEWORK_OBJECT_ID,
-        "sui_system",
-        "request_set_commission_rate",
-    ),
-];
+const BLOCKED_MOVE_FUNCTIONS: [(ObjectID, &str, &str); 1] = [(
+    SUI_FRAMEWORK_OBJECT_ID,
+    "sui_system",
+    "request_set_commission_rate",
+)];
 
 #[cfg(test)]
 #[path = "unit_tests/messages_tests.rs"]
@@ -201,10 +191,16 @@ pub enum GenesisObject {
     },
 }
 
+/// Only commit_timestamp_ms is passed to the move call currently.
+/// However we include epoch and round to make sure each ConsensusCommitPrologue has a unique tx digest.
 #[derive(Debug, PartialEq, Eq, Hash, Clone, Serialize, Deserialize)]
 pub struct ConsensusCommitPrologue {
+    /// Epoch of the commit prologue transaction
+    pub epoch: u64,
+    /// Consensus round of the commit
+    pub round: u64,
     /// Unix timestamp from consensus
-    pub checkpoint_start_timestamp_ms: u64,
+    pub commit_timestamp_ms: CheckpointTimestamp,
 }
 
 impl GenesisObject {
@@ -451,7 +447,7 @@ impl Command {
         }
     }
 
-    fn validity_check(&self) -> SuiResult {
+    fn validity_check(&self) -> UserInputResult {
         match self {
             Command::MoveCall(call) => {
                 let is_blocked = BLOCKED_MOVE_FUNCTIONS.contains(&(
@@ -459,7 +455,7 @@ impl Command {
                     call.module.as_str(),
                     call.function.as_str(),
                 ));
-                fp_ensure!(!is_blocked, SuiError::BlockedMoveFunction);
+                fp_ensure!(!is_blocked, UserInputError::BlockedMoveFunction);
             }
             Command::TransferObjects(_, _)
             | Command::SplitCoin(_, _)
@@ -486,7 +482,7 @@ fn write_sep<T: Display>(
 }
 
 impl ProgrammableTransaction {
-    pub fn input_objects(&self) -> SuiResult<Vec<InputObjectKind>> {
+    pub fn input_objects(&self) -> UserInputResult<Vec<InputObjectKind>> {
         let ProgrammableTransaction { inputs, commands } = self;
         let input_arg_objects = inputs
             .iter()
@@ -494,7 +490,7 @@ impl ProgrammableTransaction {
             .collect::<Vec<_>>();
         let mut used = HashSet::new();
         if !input_arg_objects.iter().all(|o| used.insert(o.object_id())) {
-            return Err(SuiError::DuplicateObjectRefInput);
+            return Err(UserInputError::DuplicateObjectRefInput);
         }
         Ok(input_arg_objects
             .into_iter()
@@ -502,9 +498,9 @@ impl ProgrammableTransaction {
             .collect())
     }
 
-    fn validity_check(&self) -> SuiResult {
+    fn validity_check(&self) -> UserInputResult {
         if !cfg!(test) {
-            return Err(SuiError::Unknown(
+            return Err(UserInputError::Unsupported(
                 "Programmable transactions are not yet available".to_owned(),
             ));
         }
@@ -680,7 +676,7 @@ impl SingleTransactionKind {
     /// For a Move object, we attach the object reference;
     /// for a Move package, we provide the object id only since they never change on chain.
     /// TODO: use an iterator over references here instead of a Vec to avoid allocations.
-    pub fn input_objects(&self) -> SuiResult<Vec<InputObjectKind>> {
+    pub fn input_objects(&self) -> UserInputResult<Vec<InputObjectKind>> {
         let input_objects = match &self {
             Self::TransferObject(TransferObject { object_ref, .. }) => {
                 vec![InputObjectKind::ImmOrOwnedMoveObject(*object_ref)]
@@ -732,12 +728,12 @@ impl SingleTransactionKind {
         // transaction.
         let mut used = HashSet::new();
         if !input_objects.iter().all(|o| used.insert(o.object_id())) {
-            return Err(SuiError::DuplicateObjectRefInput);
+            return Err(UserInputError::DuplicateObjectRefInput);
         }
         Ok(input_objects)
     }
 
-    pub fn validity_check(&self, gas_payment: &ObjectRef) -> SuiResult {
+    pub fn validity_check(&self, gas_payment: &ObjectRef) -> UserInputResult {
         match self {
             SingleTransactionKind::Call(call) => {
                 let is_blocked = BLOCKED_MOVE_FUNCTIONS.contains(&(
@@ -745,7 +741,7 @@ impl SingleTransactionKind {
                     call.module.as_str(),
                     call.function.as_str(),
                 ));
-                fp_ensure!(!is_blocked, SuiError::BlockedMoveFunction);
+                fp_ensure!(!is_blocked, UserInputError::BlockedMoveFunction);
             }
             SingleTransactionKind::Pay(_)
             | SingleTransactionKind::Publish(_)
@@ -755,19 +751,19 @@ impl SingleTransactionKind {
             | SingleTransactionKind::Genesis(_)
             | SingleTransactionKind::ConsensusCommitPrologue(_) => (),
             SingleTransactionKind::PaySui(p) => {
-                fp_ensure!(!p.coins.is_empty(), SuiError::EmptyInputCoins);
+                fp_ensure!(!p.coins.is_empty(), UserInputError::EmptyInputCoins);
                 fp_ensure!(
                     // unwrap() is safe because coins are not empty.
                     p.coins.first().unwrap() == gas_payment,
-                    SuiError::UnexpectedGasPaymentObject
+                    UserInputError::UnexpectedGasPaymentObject
                 );
             }
             SingleTransactionKind::PayAllSui(pa) => {
-                fp_ensure!(!pa.coins.is_empty(), SuiError::EmptyInputCoins);
+                fp_ensure!(!pa.coins.is_empty(), UserInputError::EmptyInputCoins);
                 fp_ensure!(
                     // unwrap() is safe because coins are not empty.
                     pa.coins.first().unwrap() == gas_payment,
-                    SuiError::UnexpectedGasPaymentObject
+                    UserInputError::UnexpectedGasPaymentObject
                 );
             }
             SingleTransactionKind::ProgrammableTransaction(p) => p.validity_check()?,
@@ -866,7 +862,7 @@ impl Display for SingleTransactionKind {
             }
             Self::ConsensusCommitPrologue(p) => {
                 writeln!(writer, "Transaction Kind : Consensus Commit Prologue")?;
-                writeln!(writer, "Timestamp : {}", p.checkpoint_start_timestamp_ms)?;
+                writeln!(writer, "Timestamp : {}", p.commit_timestamp_ms)?;
             }
             Self::ProgrammableTransaction(p) => {
                 writeln!(writer, "Transaction Kind : Programmable")?;
@@ -903,11 +899,11 @@ impl TransactionKind {
         }
     }
 
-    pub fn input_objects(&self) -> SuiResult<Vec<InputObjectKind>> {
+    pub fn input_objects(&self) -> UserInputResult<Vec<InputObjectKind>> {
         let inputs: Vec<_> = self
             .single_transactions()
             .map(|s| s.input_objects())
-            .collect::<SuiResult<Vec<_>>>()?
+            .collect::<UserInputResult<Vec<_>>>()?
             .into_iter()
             .flatten()
             .collect();
@@ -1325,11 +1321,8 @@ impl TransactionData {
             .collect()
     }
 
-    pub fn input_objects(&self) -> SuiResult<Vec<InputObjectKind>> {
-        let mut inputs = self
-            .kind
-            .input_objects()
-            .map_err(SuiError::into_transaction_input_error)?;
+    pub fn input_objects(&self) -> UserInputResult<Vec<InputObjectKind>> {
+        let mut inputs = self.kind.input_objects()?;
 
         if !self.kind.is_system_tx() && !self.kind.is_pay_sui_tx() {
             inputs.push(InputObjectKind::ImmOrOwnedMoveObject(
@@ -1339,13 +1332,13 @@ impl TransactionData {
         Ok(inputs)
     }
 
-    pub fn validity_check(&self) -> SuiResult {
+    pub fn validity_check(&self) -> UserInputResult {
         Self::validity_check_impl(&self.kind, self.gas_payment_object_ref())?;
         self.check_sponsorship()
     }
 
     /// Check if the transaction is compliant with sponsorship.
-    fn check_sponsorship(&self) -> SuiResult {
+    fn check_sponsorship(&self) -> UserInputResult {
         // Not a sponsored transaction, nothing to check
         if self.gas_owner() == self.sender() {
             return Ok(());
@@ -1371,15 +1364,15 @@ impl TransactionData {
         if allow_sponsored_tx {
             return Ok(());
         }
-        Err(SuiError::UnsupportedSponsoredTransactionKind)
+        Err(UserInputError::UnsupportedSponsoredTransactionKind)
     }
 
-    pub fn validity_check_impl(kind: &TransactionKind, gas_payment: &ObjectRef) -> SuiResult {
+    pub fn validity_check_impl(kind: &TransactionKind, gas_payment: &ObjectRef) -> UserInputResult {
         match kind {
             TransactionKind::Batch(b) => {
                 fp_ensure!(
                     !b.is_empty(),
-                    SuiError::InvalidBatchTransaction {
+                    UserInputError::InvalidBatchTransaction {
                         error: "Batch Transaction cannot be empty".to_string(),
                     }
                 );
@@ -1399,7 +1392,7 @@ impl TransactionData {
                 });
                 fp_ensure!(
                     valid,
-                    SuiError::InvalidBatchTransaction {
+                    UserInputError::InvalidBatchTransaction {
                         error: "Batch transaction contains non-batchable transactions. Only Call,
                         Pay and TransferObject are allowed"
                             .to_string()
@@ -1573,7 +1566,6 @@ impl Transaction {
         )
     }
 
-    // FIXME move this to another place
     pub fn signature_from_signer(
         data: TransactionData,
         intent: Intent,
@@ -1632,9 +1624,15 @@ impl VerifiedTransaction {
             .pipe(Self::new_system_transaction)
     }
 
-    pub fn new_consensus_commit_prologue(checkpoint_start_timestamp_ms: u64) -> Self {
+    pub fn new_consensus_commit_prologue(
+        epoch: u64,
+        round: u64,
+        commit_timestamp_ms: CheckpointTimestamp,
+    ) -> Self {
         ConsensusCommitPrologue {
-            checkpoint_start_timestamp_ms,
+            epoch,
+            round,
+            commit_timestamp_ms,
         }
         .pipe(SingleTransactionKind::ConsensusCommitPrologue)
         .pipe(Self::new_system_transaction)
@@ -1902,9 +1900,16 @@ pub enum CallResult {
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub enum ExecutionStatus {
     Success,
-    // Gas used in the failed case, and the error.
-    Failure { error: ExecutionFailureStatus },
+    /// Gas used in the failed case, and the error.
+    Failure {
+        /// The error
+        error: ExecutionFailureStatus,
+        /// Which command the error occurred
+        command: Option<CommandIndex>,
+    },
 }
+
+pub type CommandIndex = usize;
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
 pub enum ExecutionFailureStatus {
@@ -2362,8 +2367,11 @@ impl Display for InvalidSharedByValue {
 impl std::error::Error for ExecutionFailureStatus {}
 
 impl ExecutionStatus {
-    pub fn new_failure(error: ExecutionFailureStatus) -> ExecutionStatus {
-        ExecutionStatus::Failure { error }
+    pub fn new_failure(
+        error: ExecutionFailureStatus,
+        command: Option<CommandIndex>,
+    ) -> ExecutionStatus {
+        ExecutionStatus::Failure { error, command }
     }
 
     pub fn is_ok(&self) -> bool {
@@ -2383,12 +2391,12 @@ impl ExecutionStatus {
         }
     }
 
-    pub fn unwrap_err(self) -> ExecutionFailureStatus {
+    pub fn unwrap_err(self) -> (ExecutionFailureStatus, Option<CommandIndex>) {
         match self {
             ExecutionStatus::Success { .. } => {
                 panic!("Unable to unwrap() on {:?}", self);
             }
-            ExecutionStatus::Failure { error } => error,
+            ExecutionStatus::Failure { error, command } => (error, command),
         }
     }
 }
@@ -2685,20 +2693,22 @@ impl InputObjectKind {
 
     pub fn version(&self) -> Option<SequenceNumber> {
         match self {
-            Self::MovePackage(..) => Some(PACKAGE_VERSION),
+            Self::MovePackage(..) => None,
             Self::ImmOrOwnedMoveObject((_, version, _)) => Some(*version),
             Self::SharedMoveObject { .. } => None,
         }
     }
 
-    pub fn object_not_found_error(&self) -> SuiError {
+    pub fn object_not_found_error(&self) -> UserInputError {
         match *self {
-            Self::MovePackage(package_id) => SuiError::DependentPackageNotFound { package_id },
-            Self::ImmOrOwnedMoveObject((object_id, version, _)) => SuiError::ObjectNotFound {
+            Self::MovePackage(package_id) => {
+                UserInputError::DependentPackageNotFound { package_id }
+            }
+            Self::ImmOrOwnedMoveObject((object_id, version, _)) => UserInputError::ObjectNotFound {
                 object_id,
                 version: Some(version),
             },
-            Self::SharedMoveObject { id, .. } => SuiError::ObjectNotFound {
+            Self::SharedMoveObject { id, .. } => UserInputError::ObjectNotFound {
                 object_id: id,
                 version: None,
             },
@@ -3115,4 +3125,10 @@ pub struct CommitteeInfo {
     pub committee_info: Vec<(AuthorityName, StakeUnit)>,
     // TODO: We could also return the certified checkpoint that contains this committee.
     // This would allows a client to verify the authenticity of the committee.
+}
+
+#[derive(Serialize, Deserialize, Clone, Debug)]
+pub struct SystemStateRequest {
+    // This is needed to make gRPC happy.
+    pub _unused: bool,
 }

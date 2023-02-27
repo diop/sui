@@ -38,7 +38,7 @@ use sui_types::coin::CoinMetadata;
 use sui_types::committee::EpochId;
 use sui_types::crypto::SuiAuthorityStrongQuorumSignInfo;
 use sui_types::dynamic_field::DynamicFieldInfo;
-use sui_types::error::{ExecutionError, SuiError};
+use sui_types::error::{ExecutionError, SuiError, UserInputError, UserInputResult};
 use sui_types::event::{BalanceChangeType, Event, EventID};
 use sui_types::event::{EventEnvelope, EventType};
 use sui_types::filter::EventFilter;
@@ -550,6 +550,7 @@ impl TryInto<Object> for SuiObject<SuiRawData> {
             }
             SuiRawData::Package(p) => Data::Package(MovePackage::new(
                 p.id,
+                self.reference.version,
                 &p.module_map,
                 protocol_config.max_move_package_size(),
             )?),
@@ -1024,12 +1025,12 @@ pub enum SuiObjectRead<T: SuiData> {
 impl<T: SuiData> SuiObjectRead<T> {
     /// Returns a reference to the object if there is any, otherwise an Err if
     /// the object does not exist or is deleted.
-    pub fn object(&self) -> Result<&SuiObject<T>, SuiError> {
+    pub fn object(&self) -> UserInputResult<&SuiObject<T>> {
         match &self {
-            Self::Deleted(oref) => Err(SuiError::ObjectDeleted {
+            Self::Deleted(oref) => Err(UserInputError::ObjectDeleted {
                 object_ref: oref.to_object_ref(),
             }),
-            Self::NotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::NotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: *id,
                 version: None,
             }),
@@ -1039,12 +1040,12 @@ impl<T: SuiData> SuiObjectRead<T> {
 
     /// Returns the object value if there is any, otherwise an Err if
     /// the object does not exist or is deleted.
-    pub fn into_object(self) -> Result<SuiObject<T>, SuiError> {
+    pub fn into_object(self) -> UserInputResult<SuiObject<T>> {
         match self {
-            Self::Deleted(oref) => Err(SuiError::ObjectDeleted {
+            Self::Deleted(oref) => Err(UserInputError::ObjectDeleted {
                 object_ref: oref.to_object_ref(),
             }),
-            Self::NotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::NotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: id,
                 version: None,
             }),
@@ -1090,17 +1091,17 @@ pub enum SuiPastObjectRead<T: SuiData> {
 
 impl<T: SuiData> SuiPastObjectRead<T> {
     /// Returns a reference to the object if there is any, otherwise an Err
-    pub fn object(&self) -> Result<&SuiObject<T>, SuiError> {
+    pub fn object(&self) -> UserInputResult<&SuiObject<T>> {
         match &self {
-            Self::ObjectDeleted(oref) => Err(SuiError::ObjectDeleted {
+            Self::ObjectDeleted(oref) => Err(UserInputError::ObjectDeleted {
                 object_ref: oref.to_object_ref(),
             }),
-            Self::ObjectNotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::ObjectNotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: *id,
                 version: None,
             }),
             Self::VersionFound(o) => Ok(o),
-            Self::VersionNotFound(id, seq_num) => Err(SuiError::ObjectNotFound {
+            Self::VersionNotFound(id, seq_num) => Err(UserInputError::ObjectNotFound {
                 object_id: *id,
                 version: Some(*seq_num),
             }),
@@ -1108,7 +1109,7 @@ impl<T: SuiData> SuiPastObjectRead<T> {
                 object_id,
                 asked_version,
                 latest_version,
-            } => Err(SuiError::ObjectSequenceNumberTooHigh {
+            } => Err(UserInputError::ObjectSequenceNumberTooHigh {
                 object_id: *object_id,
                 asked_version: *asked_version,
                 latest_version: *latest_version,
@@ -1117,17 +1118,17 @@ impl<T: SuiData> SuiPastObjectRead<T> {
     }
 
     /// Returns the object value if there is any, otherwise an Err
-    pub fn into_object(self) -> Result<SuiObject<T>, SuiError> {
+    pub fn into_object(self) -> UserInputResult<SuiObject<T>> {
         match self {
-            Self::ObjectDeleted(oref) => Err(SuiError::ObjectDeleted {
+            Self::ObjectDeleted(oref) => Err(UserInputError::ObjectDeleted {
                 object_ref: oref.to_object_ref(),
             }),
-            Self::ObjectNotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::ObjectNotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: id,
                 version: None,
             }),
             Self::VersionFound(o) => Ok(o),
-            Self::VersionNotFound(object_id, version) => Err(SuiError::ObjectNotFound {
+            Self::VersionNotFound(object_id, version) => Err(UserInputError::ObjectNotFound {
                 object_id,
                 version: Some(version),
             }),
@@ -1135,7 +1136,7 @@ impl<T: SuiData> SuiPastObjectRead<T> {
                 object_id,
                 asked_version,
                 latest_version,
-            } => Err(SuiError::ObjectSequenceNumberTooHigh {
+            } => Err(UserInputError::ObjectSequenceNumberTooHigh {
                 object_id,
                 asked_version,
                 latest_version,
@@ -1606,7 +1607,9 @@ pub struct SuiGenesisTransaction {
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SuiConsensusCommitPrologue {
-    pub checkpoint_start_timestamp_ms: u64,
+    pub epoch: u64,
+    pub round: u64,
+    pub commit_timestamp_ms: u64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -1725,7 +1728,11 @@ impl Display for SuiTransactionKind {
             }
             Self::ConsensusCommitPrologue(p) => {
                 writeln!(writer, "Transaction Kind : Consensus Commit Prologue")?;
-                writeln!(writer, "Timestamp : {}", p.checkpoint_start_timestamp_ms)?;
+                writeln!(
+                    writer,
+                    "Epoch: {}, Round: {}, Timestamp : {}",
+                    p.epoch, p.round, p.commit_timestamp_ms
+                )?;
             }
         }
         write!(f, "{}", writer)
@@ -1788,7 +1795,9 @@ impl TryFrom<SingleTransactionKind> for SuiTransactionKind {
             }),
             SingleTransactionKind::ConsensusCommitPrologue(p) => {
                 Self::ConsensusCommitPrologue(SuiConsensusCommitPrologue {
-                    checkpoint_start_timestamp_ms: p.checkpoint_start_timestamp_ms,
+                    epoch: p.epoch,
+                    round: p.round,
+                    commit_timestamp_ms: p.commit_timestamp_ms,
                 })
             }
             SingleTransactionKind::ProgrammableTransaction(_) => {
@@ -2098,8 +2107,17 @@ impl From<ExecutionStatus> for SuiExecutionStatus {
     fn from(status: ExecutionStatus) -> Self {
         match status {
             ExecutionStatus::Success => Self::Success,
-            ExecutionStatus::Failure { error } => Self::Failure {
-                error: format!("{:?}", error),
+            ExecutionStatus::Failure {
+                error,
+                command: None,
+            } => Self::Failure {
+                error: format!("{error:?}"),
+            },
+            ExecutionStatus::Failure {
+                error,
+                command: Some(idx),
+            } => Self::Failure {
+                error: format!("{error:?} in command {idx}"),
             },
         }
     }

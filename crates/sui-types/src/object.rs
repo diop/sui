@@ -18,7 +18,7 @@ use serde_with::Bytes;
 
 use crate::base_types::ObjectIDParseError;
 use crate::crypto::{deterministic_random_account_key, sha3_hash};
-use crate::error::{ExecutionError, ExecutionErrorKind};
+use crate::error::{ExecutionError, ExecutionErrorKind, UserInputError, UserInputResult};
 use crate::error::{SuiError, SuiResult};
 use crate::move_package::MovePackage;
 use crate::{
@@ -31,9 +31,6 @@ use sui_protocol_config::ProtocolConfig;
 
 pub const GAS_VALUE_FOR_TESTING: u64 = 1_000_000_u64;
 pub const OBJECT_START_VERSION: SequenceNumber = SequenceNumber::from_u64(1);
-
-/// Packages are immutable, version is always 1
-pub const PACKAGE_VERSION: SequenceNumber = OBJECT_START_VERSION;
 
 #[serde_as]
 #[derive(Eq, PartialEq, Debug, Clone, Deserialize, Serialize, Hash)]
@@ -457,6 +454,7 @@ impl Object {
     ) -> Result<Self, ExecutionError> {
         Ok(Object {
             data: Data::Package(MovePackage::from_module_iter(
+                OBJECT_START_VERSION,
                 modules,
                 max_move_package_size,
             )?),
@@ -525,8 +523,8 @@ impl Object {
         use Data::*;
 
         match &self.data {
-            Move(v) => v.version(),
-            Package(_) => PACKAGE_VERSION,
+            Move(o) => o.version(),
+            Package(p) => p.version(),
         }
     }
 
@@ -546,11 +544,7 @@ impl Object {
         let meta_data_size = size_of::<Owner>() + size_of::<TransactionDigest>() + size_of::<u64>();
         let data_size = match &self.data {
             Data::Move(m) => m.object_size_for_gas_metering(),
-            Data::Package(p) => p
-                .serialized_module_map()
-                .iter()
-                .map(|(name, module)| name.len() + module.len())
-                .sum(),
+            Data::Package(p) => p.object_size_for_gas_metering(),
         };
         meta_data_size + data_size
     }
@@ -767,10 +761,10 @@ pub enum ObjectRead {
 impl ObjectRead {
     /// Returns the object value if there is any, otherwise an Err if
     /// the object does not exist or is deleted.
-    pub fn into_object(self) -> Result<Object, SuiError> {
+    pub fn into_object(self) -> UserInputResult<Object> {
         match self {
-            Self::Deleted(oref) => Err(SuiError::ObjectDeleted { object_ref: oref }),
-            Self::NotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::Deleted(oref) => Err(UserInputError::ObjectDeleted { object_ref: oref }),
+            Self::NotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: id,
                 version: None,
             }),
@@ -825,15 +819,15 @@ pub enum PastObjectRead {
 
 impl PastObjectRead {
     /// Returns the object value if there is any, otherwise an Err
-    pub fn into_object(self) -> Result<Object, SuiError> {
+    pub fn into_object(self) -> UserInputResult<Object> {
         match self {
-            Self::ObjectDeleted(oref) => Err(SuiError::ObjectDeleted { object_ref: oref }),
-            Self::ObjectNotExists(id) => Err(SuiError::ObjectNotFound {
+            Self::ObjectDeleted(oref) => Err(UserInputError::ObjectDeleted { object_ref: oref }),
+            Self::ObjectNotExists(id) => Err(UserInputError::ObjectNotFound {
                 object_id: id,
                 version: None,
             }),
             Self::VersionFound(_, o, _) => Ok(o),
-            Self::VersionNotFound(object_id, version) => Err(SuiError::ObjectNotFound {
+            Self::VersionNotFound(object_id, version) => Err(UserInputError::ObjectNotFound {
                 object_id,
                 version: Some(version),
             }),
@@ -841,7 +835,7 @@ impl PastObjectRead {
                 object_id,
                 asked_version,
                 latest_version,
-            } => Err(SuiError::ObjectSequenceNumberTooHigh {
+            } => Err(UserInputError::ObjectSequenceNumberTooHigh {
                 object_id,
                 asked_version,
                 latest_version,

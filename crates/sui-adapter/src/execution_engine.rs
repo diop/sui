@@ -9,7 +9,7 @@ use move_vm_runtime::move_vm::MoveVM;
 use sui_types::base_types::SequenceNumber;
 use tracing::{debug, instrument};
 
-use crate::adapter;
+use crate::{adapter, programmable_transactions};
 use sui_protocol_config::ProtocolConfig;
 use sui_types::coin::{transfer_coin, update_input_coins, Coin};
 use sui_types::epoch_data::EpochData;
@@ -87,10 +87,10 @@ pub fn execute_transaction_to_effects<
 
     let (status, execution_result) = match execution_result {
         Ok(results) => (ExecutionStatus::Success, Ok(results)),
-        Err(error) => (
-            ExecutionStatus::new_failure(error.to_execution_status()),
-            Err(error),
-        ),
+        Err(error) => {
+            let (status, command) = error.to_execution_status();
+            (ExecutionStatus::new_failure(status, command), Err(error))
+        }
     };
     debug!(
         computation_gas_cost = gas_cost_summary.computation_cost,
@@ -345,8 +345,17 @@ fn execution_loop<
                 gas_status,
                 protocol_config,
             )?,
-            SingleTransactionKind::ProgrammableTransaction(_) => {
-                unreachable!("programmable transactions are not yet supported")
+            SingleTransactionKind::ProgrammableTransaction(pt) => {
+                // TODO use Mode
+                programmable_transactions::execution::execute(
+                    protocol_config,
+                    move_vm,
+                    temporary_store,
+                    tx_ctx,
+                    gas_status,
+                    gas_object_id,
+                    pt,
+                )?
             }
         };
     }
@@ -442,7 +451,7 @@ fn setup_consensus_commit<S: BackingPackageStore + ParentSync + ChildObjectResol
                 initial_shared_version: SUI_CLOCK_OBJECT_SHARED_VERSION,
                 mutable: true,
             }),
-            CallArg::Pure(bcs::to_bytes(&prologue.checkpoint_start_timestamp_ms).unwrap()),
+            CallArg::Pure(bcs::to_bytes(&prologue.commit_timestamp_ms).unwrap()),
         ],
         gas_status.create_move_gas_status(),
         tx_ctx,
@@ -777,7 +786,8 @@ fn test_pay_empty_coins() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::EmptyInputCoins
     );
 }
@@ -796,7 +806,8 @@ fn test_pay_empty_recipients() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::EmptyRecipients
     );
 }
@@ -815,7 +826,8 @@ fn test_pay_empty_amounts() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::RecipientsAmountsArityMismatch
     );
 }
@@ -838,7 +850,8 @@ fn test_pay_arity_mismatch() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::RecipientsAmountsArityMismatch
     );
 }
@@ -860,7 +873,8 @@ fn test_pay_amount_overflow() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::TotalAmountOverflow
     );
 }
@@ -888,7 +902,8 @@ fn test_pay_insufficient_balance() {
     assert_eq!(
         pay(&mut store, coin_objects, recipients, amounts, &mut ctx)
             .unwrap_err()
-            .to_execution_status(),
+            .to_execution_status()
+            .0,
         ExecutionFailureStatus::InsufficientBalance
     );
 }

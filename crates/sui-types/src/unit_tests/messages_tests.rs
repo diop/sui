@@ -811,7 +811,7 @@ fn test_sponsored_transaction_validity_check() {
         )
         .validity_check()
         .unwrap_err(),
-        SuiError::UnsupportedSponsoredTransactionKind
+        UserInputError::UnsupportedSponsoredTransactionKind
     );
 
     // PaySui cannot be sponsored
@@ -827,7 +827,7 @@ fn test_sponsored_transaction_validity_check() {
         )
         .validity_check()
         .unwrap_err(),
-        SuiError::UnsupportedSponsoredTransactionKind
+        UserInputError::UnsupportedSponsoredTransactionKind
     );
 
     // PayAllSui cannot be sponsored
@@ -842,7 +842,7 @@ fn test_sponsored_transaction_validity_check() {
         )
         .validity_check()
         .unwrap_err(),
-        SuiError::UnsupportedSponsoredTransactionKind
+        UserInputError::UnsupportedSponsoredTransactionKind
     );
 
     // Batch is non-sponsorable
@@ -858,7 +858,7 @@ fn test_sponsored_transaction_validity_check() {
         )
         .validity_check()
         .unwrap_err(),
-        SuiError::UnsupportedSponsoredTransactionKind
+        UserInputError::UnsupportedSponsoredTransactionKind
     );
 }
 
@@ -1002,7 +1002,7 @@ fn test_change_epoch_transaction() {
 
 #[test]
 fn test_consensus_commit_prologue_transaction() {
-    let tx = VerifiedTransaction::new_consensus_commit_prologue(42);
+    let tx = VerifiedTransaction::new_consensus_commit_prologue(0, 0, 42);
     assert!(tx.contains_shared_object());
     assert_eq!(
         tx.shared_input_objects().next().unwrap(),

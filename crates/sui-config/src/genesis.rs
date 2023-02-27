@@ -36,7 +36,7 @@ use sui_types::messages_checkpoint::{
     CertifiedCheckpointSummary, CheckpointContents, CheckpointSummary, VerifiedCheckpoint,
 };
 use sui_types::object::Owner;
-use sui_types::sui_system_state::SuiSystemState;
+use sui_types::sui_system_state::{get_sui_system_state, SuiSystemState};
 use sui_types::temporary_store::{InnerTemporaryStore, TemporaryStore};
 use sui_types::MOVE_STDLIB_ADDRESS;
 use sui_types::SUI_FRAMEWORK_ADDRESS;
@@ -132,18 +132,7 @@ impl Genesis {
     }
 
     pub fn sui_system_object(&self) -> SuiSystemState {
-        let sui_system_object = self
-            .objects()
-            .iter()
-            .find(|o| o.id() == sui_types::SUI_SYSTEM_STATE_OBJECT_ID)
-            .expect("Sui System State object must always exist");
-        let move_object = sui_system_object
-            .data
-            .try_as_move()
-            .expect("Sui System State object must be a Move object");
-        let result = bcs::from_bytes::<SuiSystemState>(move_object.contents())
-            .expect("Sui System State object deserialization cannot fail");
-        result
+        get_sui_system_state(self.objects()).expect("Sui System State object must always exist")
     }
 
     pub fn clock(&self) -> Clock {
@@ -429,17 +418,9 @@ impl Builder {
     }
 
     fn committee(objects: &[Object]) -> Committee {
-        let sui_system_object = objects
-            .iter()
-            .find(|o| o.id() == sui_types::SUI_SYSTEM_STATE_OBJECT_ID)
-            .expect("Sui System State object must always exist");
-        let move_object = sui_system_object
-            .data
-            .try_as_move()
-            .expect("Sui System State object must be a Move object");
-        let result = bcs::from_bytes::<SuiSystemState>(move_object.contents())
-            .expect("Sui System State object deserialization cannot fail");
-        result.get_current_epoch_committee().committee
+        let sui_system_object =
+            get_sui_system_state(objects).expect("Sui System State object must always exist");
+        sui_system_object.get_current_epoch_committee().committee
     }
 
     pub fn protocol_version(&self) -> ProtocolVersion {
@@ -968,6 +949,7 @@ pub fn generate_genesis_system_object(
     let mut proof_of_possessions = Vec::new();
     let mut sui_addresses = Vec::new();
     let mut network_addresses = Vec::new();
+    let mut p2p_addresses = Vec::new();
     let mut consensus_addresses = Vec::new();
     let mut worker_addresses = Vec::new();
     let mut names = Vec::new();
@@ -989,6 +971,7 @@ pub fn generate_genesis_system_object(
         proof_of_possessions.push(proof_of_possession.as_ref().to_vec());
         sui_addresses.push(validator.sui_address());
         network_addresses.push(validator.network_address());
+        p2p_addresses.push(validator.p2p_address());
         consensus_addresses.push(validator.narwhal_primary_address());
         worker_addresses.push(validator.narwhal_worker_address());
         names.push(validator.name().to_owned().into_bytes());
@@ -1017,6 +1000,7 @@ pub fn generate_genesis_system_object(
             CallArg::Pure(bcs::to_bytes(&image_url).unwrap()),
             CallArg::Pure(bcs::to_bytes(&project_url).unwrap()),
             CallArg::Pure(bcs::to_bytes(&network_addresses).unwrap()),
+            CallArg::Pure(bcs::to_bytes(&p2p_addresses).unwrap()),
             CallArg::Pure(bcs::to_bytes(&consensus_addresses).unwrap()),
             CallArg::Pure(bcs::to_bytes(&worker_addresses).unwrap()),
             CallArg::Pure(bcs::to_bytes(&stakes).unwrap()),
