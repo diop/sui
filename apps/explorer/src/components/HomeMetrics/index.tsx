@@ -33,7 +33,7 @@ function roundFloat(number: number, decimals: number) {
 }
 
 // Simple wrapper around stats to avoid text wrapping:
-function StatsWrapper(props: StatsProps) {
+export function StatsWrapper(props: StatsProps) {
     return (
         <div className="flex-shrink-0">
             <Stats {...props} />

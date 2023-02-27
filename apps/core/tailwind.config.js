@@ -85,7 +85,9 @@ module.exports = {
         100: "1",
         130: "1.3",
       },
+
       boxShadow: {
+        notification: "0px 0px 20px rgba(29, 55, 87, 0.11)",
         moduleOption:
           "0px 0px 29px rgba(0, 0, 0, 0.13), 0px 0px 44px rgba(0, 0, 0, 0.15), 0px 0px 0px rgba(0, 0, 0, 0.2)",
         blurXl: "0 0 20px 0 rgba(0, 0, 0, 0.3)",
@@ -122,8 +124,8 @@ module.exports = {
       },
       keyframes: {
         shimmer: {
-          "0%": { "background-position": "-1000px 0" },
-          "100%": { "background-position": "1000px 0" },
+          "0%": { "background-position": "-100% 0" },
+          "100%": { "background-position": "200% 0" },
         },
       },
       animation: {
