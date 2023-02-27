@@ -363,10 +363,7 @@
                     "digest": "BqjGUp6Ek8UxWdKkdfm2bmeDivvuEEUBHXvCD2GrfczB"
                   }
                 },
-                "eventsSummary": {
-                  "eventCount": 5,
-                  "digest": "6YfuPiHAxSrGMbFYN6AJEEHuP7LHTXzA6wHvxAhdLJdG"
-                }
+                "eventsDigest": "6YfuPiHAxSrGMbFYN6AJEEHuP7LHTXzA6wHvxAhdLJdG"
               },
               "events": [
                 {
@@ -1625,10 +1622,7 @@
                     "digest": "4xjfA3AWhAGB1nwf8F27k5WDGhY5prm6bGMz27tNP1Co"
                   }
                 },
-                "eventsSummary": {
-                  "eventCount": 5,
-                  "digest": "E3dSj5imFCTb5QUaaM2RKkmM2FUszD99qvfcNiUVqBBv"
-                }
+                "eventsDigest": "E3dSj5imFCTb5QUaaM2RKkmM2FUszD99qvfcNiUVqBBv"
               },
               "events": [
                 {
@@ -2603,10 +2597,7 @@
                     "digest": "816hEv4WAW2reK9xkf11PeHiaZJrp7PQT9oGJZhdf9TN"
                   }
                 },
-                "eventsSummary": {
-                  "eventCount": 5,
-                  "digest": "4oDBSrdDb2UM59Td5EyPhYP1h1TSphnjfSpoLnWKaM5o"
-                }
+                "eventsDigest": "4oDBSrdDb2UM59Td5EyPhYP1h1TSphnjfSpoLnWKaM5o"
               },
               "events": [
                 {
@@ -4366,29 +4357,6 @@
             ]
           }
         ]
-      },
-      "EventsSummary": {
-        "type": "object",
-        "required": [
-          "eventCount"
-        ],
-        "properties": {
-          "digest": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/TransactionEventsDigest"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "eventCount": {
-            "type": "integer",
-            "format": "uint",
-            "minimum": 0.0
-          }
-        }
       },
       "ExecuteTransactionRequestType": {
         "type": "string",
@@ -6409,7 +6377,6 @@
         "description": "The response from processing a transaction or a certified transaction",
         "type": "object",
         "required": [
-          "eventsSummary",
           "executedEpoch",
           "gasObject",
           "gasUsed",
@@ -6436,11 +6403,14 @@
               "$ref": "#/components/schemas/TransactionDigest"
             }
           },
-          "eventsSummary": {
+          "eventsDigest": {
             "description": "The events emitted during execution.",
-            "allOf": [
+            "anyOf": [
               {
-                "$ref": "#/components/schemas/EventsSummary"
+                "$ref": "#/components/schemas/TransactionEventsDigest"
+              },
+              {
+                "type": "null"
               }
             ]
           },
