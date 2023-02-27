@@ -15,6 +15,7 @@ import { PlaceholderTable } from '~/ui/PlaceholderTable';
 import { TableCard } from '~/ui/TableCard';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '~/ui/Tabs';
 import { GROWTHBOOK_FEATURES } from '~/utils/growthbook';
+import { Text } from '~/ui/Text';
 
 function Epochs() {
     const enabled = useFeature(GROWTHBOOK_FEATURES.EPOCHS_CHECKPOINTS).on;
@@ -31,12 +32,24 @@ function Epochs() {
                 ? {
                       data: epochs?.map((epoch: any) => ({
                           time: <TxTimeType timestamp={epoch.timestamp} />,
-                          epoch: epoch.epoch,
-                          transactions: epoch.transaction_count,
+                          epoch: (
+                              <Text variant="bodySmall/medium">
+                                  {epoch.epoch}
+                              </Text>
+                          ),
+                          transactions: (
+                              <Text variant="bodySmall/medium">
+                                  {epoch.transaction_count}
+                              </Text>
+                          ),
                           stakeRewards: (
                               <SuiAmount amount={epoch.total_stake_rewards} />
                           ),
-                          checkpointSet: epoch.checkpoint_set?.join(' - '),
+                          checkpointSet: (
+                              <Text variant="bodySmall/medium">
+                                  {epoch.checkpoint_set?.join(' - ')}
+                              </Text>
+                          ),
                           storageRevenue: (
                               <SuiAmount
                                   amount={
