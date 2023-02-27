@@ -327,7 +327,7 @@ async fn test_object_owning_another_object() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -353,7 +353,7 @@ async fn test_object_owning_another_object() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -453,7 +453,7 @@ async fn test_object_owning_another_object() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -481,7 +481,7 @@ async fn test_object_owning_another_object() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -575,7 +575,7 @@ async fn test_create_then_delete_parent_child() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -637,7 +637,7 @@ async fn test_create_then_delete_parent_child_wrap() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -681,7 +681,7 @@ async fn test_create_then_delete_parent_child_wrap() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -734,7 +734,7 @@ async fn test_create_then_delete_parent_child_wrap_separate() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -760,7 +760,7 @@ async fn test_create_then_delete_parent_child_wrap_separate() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -786,7 +786,7 @@ async fn test_create_then_delete_parent_child_wrap_separate() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]
@@ -810,7 +810,7 @@ async fn test_create_then_delete_parent_child_wrap_separate() {
     )
     .await
     .unwrap();
-    let events = if let Some(digest) = &effects.events_summary.digest {
+    let events = if let Some(digest) = &effects.events_digest {
         authority.database.get_events(digest).unwrap().data
     } else {
         vec![]

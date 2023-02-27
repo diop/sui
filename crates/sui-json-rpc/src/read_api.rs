@@ -158,7 +158,7 @@ impl ReadApiServer for ReadApi {
             .map_err(|e| anyhow!("{e}"))?;
         let checkpoint_timestamp = checkpoint.as_ref().map(|c| c.summary.timestamp_ms);
 
-        let events = if let Some(digest) = effects.events_summary.digest {
+        let events = if let Some(digest) = effects.events_digest {
             let events = self
                 .state
                 .get_transaction_events(digest)

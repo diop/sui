@@ -2338,7 +2338,7 @@ impl AuthorityState {
         {
             if let Some(transaction) = self.database.get_transaction(transaction_digest)? {
                 let cert_sig = epoch_store.get_transaction_cert_sig(transaction_digest)?;
-                let events = if let Some(digest) = effects.events_summary.digest {
+                let events = if let Some(digest) = effects.events_digest {
                     self.database.get_events(&digest)?
                 } else {
                     TransactionEvents::default()

@@ -129,7 +129,7 @@ impl CoinReadApi {
             .get_executed_transaction_and_effects(publish_txn_digest)
             .await?;
 
-        let events = if let Some(digests) = effect.events_summary.digest {
+        let events = if let Some(digests) = effect.events_digest {
             self.state.get_transaction_events(digests).await?
         } else {
             TransactionEvents::default()

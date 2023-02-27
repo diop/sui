@@ -36,6 +36,7 @@ use sui_types::base_types::{
 use sui_types::coin::CoinMetadata;
 use sui_types::committee::EpochId;
 use sui_types::crypto::SuiAuthorityStrongQuorumSignInfo;
+use sui_types::digests::TransactionEventsDigest;
 use sui_types::dynamic_field::DynamicFieldInfo;
 use sui_types::error::{ExecutionError, SuiError, UserInputError, UserInputResult};
 use sui_types::event::{BalanceChangeType, Event, EventID};
@@ -44,7 +45,7 @@ use sui_types::filter::EventFilter;
 use sui_types::gas::GasCostSummary;
 use sui_types::gas_coin::GasCoin;
 use sui_types::messages::{
-    CallArg, EffectsFinalityInfo, EventsSummary, ExecutionStatus, GenesisObject, InputObjectKind,
+    CallArg, EffectsFinalityInfo, ExecutionStatus, GenesisObject, InputObjectKind,
     MoveModulePublish, ObjectArg, Pay, PayAllSui, PaySui, SenderSignedData, SingleTransactionKind,
     TransactionData, TransactionEffects, TransactionEvents, TransactionKind,
 };
@@ -1786,7 +1787,7 @@ pub struct SuiTransactionEffects {
     // It's also included in mutated.
     pub gas_object: OwnedObjectRef,
     /// The events emitted during execution.
-    pub events_summary: EventsSummary,
+    pub events_digest: Option<TransactionEventsDigest>,
     /// The set of transaction digests this transaction depends on.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub dependencies: Vec<TransactionDigest>,
@@ -1817,7 +1818,7 @@ impl From<TransactionEffects> for SuiTransactionEffects {
                 owner: effect.gas_object.1,
                 reference: effect.gas_object.0.into(),
             },
-            events_summary: effect.events_summary,
+            events_digest: effect.events_digest,
             dependencies: effect.dependencies,
         }
     }

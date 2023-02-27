@@ -31,8 +31,8 @@ use sui_types::digests::TransactionEventsDigest;
 use sui_types::event::EventID;
 use sui_types::gas_coin::GasCoin;
 use sui_types::messages::{
-    CallArg, EventsSummary, ExecuteTransactionRequestType, MoveCall, SingleTransactionKind,
-    TransactionData, TransactionKind, TransferObject,
+    CallArg, ExecuteTransactionRequestType, MoveCall, SingleTransactionKind, TransactionData,
+    TransactionKind, TransferObject,
 };
 use sui_types::messages_checkpoint::CheckpointDigest;
 use sui_types::object::Owner;
@@ -481,10 +481,7 @@ impl RpcExampleProvider {
                     owner: Owner::ObjectOwner(signer),
                     reference: SuiObjectRef::from(gas_ref),
                 },
-                events_summary: EventsSummary {
-                    event_count: 5,
-                    digest: Some(TransactionEventsDigest::new(self.rng.gen())),
-                },
+                events_digest: Some(TransactionEventsDigest::new(self.rng.gen())),
                 dependencies: vec![],
             },
             events: SuiTransactionEvents {

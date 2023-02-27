@@ -33,7 +33,6 @@ use move_core_types::{
     account_address::AccountAddress, identifier::Identifier, language_storage::TypeTag,
     value::MoveStructLayout,
 };
-use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 use serde_with::serde_as;
 use serde_with::Bytes;
@@ -2490,7 +2489,7 @@ pub struct TransactionEffects {
     /// It's also included in mutated.
     pub gas_object: (ObjectRef, Owner),
     /// The events emitted during execution.
-    pub events_summary: EventsSummary,
+    pub events_digest: Option<TransactionEventsDigest>,
     /// The set of transaction digests this transaction depends on.
     pub dependencies: Vec<TransactionDigest>,
 }
@@ -2554,17 +2553,9 @@ impl TransactionEffects {
             unwrapped_object_count: self.unwrapped.len(),
             deleted_object_count: self.deleted.len(),
             wrapped_object_count: self.wrapped.len(),
-            event_count: self.events_summary.event_count,
             dependency_count: self.dependencies.len(),
         }
     }
-}
-
-#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, JsonSchema)]
-#[serde(rename_all = "camelCase")]
-pub struct EventsSummary {
-    pub event_count: usize,
-    pub digest: Option<TransactionEventsDigest>,
 }
 
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize, Default)]
@@ -2572,34 +2563,9 @@ pub struct TransactionEvents {
     pub data: Vec<Event>,
 }
 
-impl TransactionEvents {
-    pub fn summary(&self) -> EventsSummary {
-        EventsSummary {
-            event_count: self.data.len(),
-            digest: if self.data.is_empty() {
-                None
-            } else {
-                Some(self.digest())
-            },
-        }
-    }
-}
-
 impl Message for TransactionEffectsDigest {
     type DigestType = TransactionEffectsDigest;
     const SCOPE: IntentScope = IntentScope::TransactionEffectsDigest;
-
-    fn digest(&self) -> Self::DigestType {
-        *self
-    }
-
-    fn verify(&self) -> SuiResult {
-        Ok(())
-    }
-}
-
-impl Message for TransactionEventsDigest {
-    type DigestType = TransactionEventsDigest;
 
     fn digest(&self) -> Self::DigestType {
         *self
@@ -2709,10 +2675,7 @@ impl Default for TransactionEffects {
                 random_object_ref(),
                 Owner::AddressOwner(SuiAddress::default()),
             ),
-            events_summary: EventsSummary {
-                event_count: 0,
-                digest: None,
-            },
+            events_digest: None,
             dependencies: Vec::new(),
         }
     }
@@ -2730,7 +2693,6 @@ pub struct TransactionEffectsDebugSummary {
     pub unwrapped_object_count: usize,
     pub deleted_object_count: usize,
     pub wrapped_object_count: usize,
-    pub event_count: usize,
     pub dependency_count: usize,
     // TODO: Add deleted_and_unwrapped_object_count and event digest.
 }
