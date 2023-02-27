@@ -288,10 +288,18 @@
     sui_address: <b>address</b>,
     pubkey_bytes: <a href="">vector</a>&lt;u8&gt;
 ) {
-    // The proof of possession is the signature over ValidatorPK || AccountAddress.
-    // This proves that the account <b>address</b> is owned by the holder of ValidatorPK, and <b>ensures</b>
-    // that PK <b>exists</b>.
-    <b>let</b> signed_bytes = pubkey_bytes;
+    // The proof of possession proves that the authority account <b>address</b> is owned by the
+    // holder of authority protocol key, and also <b>ensures</b> that the authority protocol
+    // <b>public</b> key <b>exists</b>.
+
+    // This is an byte representation of an intent (See [<b>struct</b> Intent]) <b>where</b> each byte corresponds <b>to</b>:
+    // IntentScope::ProofOfPossession = 5, IntentVersion::V0 = 0, AppId::Sui = 0.
+    <b>let</b> intent_bytes = <a href="">vector</a>[5, 0, 0];
+
+    // Construct signed bytes <b>as</b> intent || message <b>where</b> message = `kosk domain || authority_pubkey_bytes || authority_account_address`.
+    // See more at generate_proof_of_possession on how is this generated: [function generate_proof_of_possession]
+    <b>let</b> signed_bytes = intent_bytes;
+    <a href="_append">vector::append</a>(&<b>mut</b> signed_bytes, pubkey_bytes);
     <b>let</b> address_bytes = <a href="_to_bytes">bcs::to_bytes</a>(&sui_address);
     <a href="_append">vector::append</a>(&<b>mut</b> signed_bytes, address_bytes);
     <b>assert</b>!(

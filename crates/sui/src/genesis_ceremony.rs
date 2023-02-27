@@ -132,7 +132,7 @@ pub fn run(cmd: Ceremony) -> Result<()> {
             let network_keypair: NetworkKeyPair = read_network_keypair_from_file(network_key_file)?;
             let pop = generate_proof_of_possession(&keypair, (&account_keypair.public()).into());
             builder = builder.add_validator(
-                sui_config::ValidatorInfo {
+            sui_config::ValidatorInfo {
                     name,
                     protocol_key: keypair.public().into(),
                     worker_key: worker_keypair.public().clone(),

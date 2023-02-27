@@ -90,16 +90,23 @@ module sui::validator {
     }
 
     const PROOF_OF_POSSESSION_DOMAIN: vector<u8> = vector[107, 111, 115, 107];
-
     fun verify_proof_of_possession(
         proof_of_possession: vector<u8>,
         sui_address: address,
         pubkey_bytes: vector<u8>
     ) {
-        // The proof of possession is the signature over ValidatorPK || AccountAddress.
-        // This proves that the account address is owned by the holder of ValidatorPK, and ensures
-        // that PK exists.
-        let signed_bytes = pubkey_bytes;
+        // The proof of possession proves that the authority account address is owned by the 
+        // holder of authority protocol key, and also ensures that the authority protocol 
+        // public key exists.
+        
+        // This is an byte representation of an intent (See [struct Intent]) where each byte corresponds to:
+        // IntentScope::ProofOfPossession = 5, IntentVersion::V0 = 0, AppId::Sui = 0. 
+        let intent_bytes = vector[5, 0, 0];
+        
+        // Construct signed bytes as intent || message where message = `kosk domain || authority_pubkey_bytes || authority_account_address`. 
+        // See more at generate_proof_of_possession on how is this generated: [function generate_proof_of_possession]
+        let signed_bytes = intent_bytes;
+        vector::append(&mut signed_bytes, pubkey_bytes);
         let address_bytes = bcs::to_bytes(&sui_address);
         vector::append(&mut signed_bytes, address_bytes);
         assert!(
