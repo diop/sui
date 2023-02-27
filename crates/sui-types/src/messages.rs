@@ -2488,7 +2488,7 @@ pub struct TransactionEffects {
     /// The updated gas object reference. Have a dedicated field for convenient access.
     /// It's also included in mutated.
     pub gas_object: (ObjectRef, Owner),
-    /// The digest of the events emitted during execution, 
+    /// The digest of the events emitted during execution,
     /// can be None if the transaction does not emmit any event.
     pub events_digest: Option<TransactionEventsDigest>,
     /// The set of transaction digests this transaction depends on.
