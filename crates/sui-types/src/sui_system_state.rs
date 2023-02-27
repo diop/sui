@@ -6,6 +6,7 @@ use crate::collection_types::{VecMap, VecSet};
 use crate::committee::{Committee, CommitteeWithNetAddresses, ProtocolVersion, StakeUnit};
 use crate::crypto::{AuthorityPublicKeyBytes, NetworkPublicKey};
 use crate::error::SuiError;
+use crate::id::ID;
 use crate::storage::ObjectStore;
 use crate::{
     balance::{Balance, Supply},
@@ -226,7 +227,7 @@ pub struct SuiSystemState {
 pub struct SuiSystemStateWrapper {
     pub info: UID,
     pub version: u64,
-    pub system_state: SuiSystemState,
+    pub inner_id: ID,
 }
 
 impl SuiSystemStateWrapper {
@@ -373,7 +374,7 @@ impl Default for SuiSystemState {
     }
 }
 
-pub fn get_sui_system_state_wrapper<S>(object_store: S) -> Result<SuiSystemStateWrapper, SuiError>
+pub fn get_sui_system_state_wrapper<S>(object_store: &S) -> Result<SuiSystemStateWrapper, SuiError>
 where
     S: ObjectStore,
 {
@@ -393,6 +394,15 @@ pub fn get_sui_system_state<S>(object_store: S) -> Result<SuiSystemState, SuiErr
 where
     S: ObjectStore,
 {
-    let wrapper = get_sui_system_state_wrapper(object_store)?;
-    Ok(wrapper.system_state)
+    let wrapper = get_sui_system_state_wrapper(&object_store)?;
+    let inner = object_store
+        .get_object(&wrapper.inner_id.bytes)?
+        .ok_or(SuiError::SuiSystemStateNotFound)?;
+    let move_object = inner
+        .data
+        .try_as_move()
+        .ok_or(SuiError::SuiSystemStateNotFound)?;
+    let result = bcs::from_bytes::<SuiSystemState>(move_object.contents())
+        .expect("Sui System State object deserialization cannot fail");
+    Ok(result)
 }

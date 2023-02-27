@@ -24,6 +24,7 @@ module sui::sui_system {
     use sui::pay;
     use sui::event;
     use sui::table::Table;
+    use sui::dynamic_object_field;
 
     friend sui::genesis;
 
@@ -81,8 +82,9 @@ module sui::sui_system {
     struct SuiSystemState has key {
         id: UID,
         version: u64,
-        // TODO: Make it a dynamic object field
-        system_state: SuiSystemStateInner,
+        /// This is the ID of the SuiSystemStateInner object. We don't need this in Move, however we need to access this
+        /// object in Rust. Caching the ID here makes that easy.
+        inner_id: ID,
     }
 
     /// Event containing system-level epoch information, emitted during
@@ -148,9 +150,9 @@ module sui::sui_system {
             // Use a hardcoded ID.
             id: object::sui_system_state(),
             version: protocol_version,
-            system_state,
+            inner_id: object::id(&system_state),
         };
-        // dynamic_object_field::add(&mut self.id, self.version, system_state);
+        dynamic_object_field::add(&mut self.id, protocol_version, system_state);
         transfer::share_object(self);
     }
 
@@ -583,13 +585,11 @@ module sui::sui_system {
     }
 
     public fun load_system_state(self: &SuiSystemState): &SuiSystemStateInner {
-        &self.system_state
-        // dynamic_object_field::borrow(&self.id, self.version)
+        dynamic_object_field::borrow(&self.id, self.version)
     }
 
     public fun load_system_state_mut(self: &mut SuiSystemState): &mut SuiSystemStateInner {
-        &mut self.system_state
-        // dynamic_object_field::borrow_mut(&mut self.id, self.version)
+        dynamic_object_field::borrow_mut(&mut self.id, self.version)
     }
 
     /// Return the current epoch number. Useful for applications that need a coarse-grained concept of time,
