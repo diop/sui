@@ -2564,24 +2564,18 @@ pub struct TransactionEvents {
     pub data: Vec<Event>,
 }
 
+impl TransactionEvents {
+    pub fn digest(&self) -> TransactionEventsDigest {
+        TransactionEventsDigest::new(sha3_hash(self))
+    }
+}
+
 impl Message for TransactionEffectsDigest {
     type DigestType = TransactionEffectsDigest;
     const SCOPE: IntentScope = IntentScope::TransactionEffectsDigest;
 
     fn digest(&self) -> Self::DigestType {
         *self
-    }
-
-    fn verify(&self) -> SuiResult {
-        Ok(())
-    }
-}
-
-impl Message for TransactionEvents {
-    type DigestType = TransactionEventsDigest;
-
-    fn digest(&self) -> Self::DigestType {
-        TransactionEventsDigest::new(sha3_hash(self))
     }
 
     fn verify(&self) -> SuiResult {

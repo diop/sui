@@ -17,7 +17,6 @@ use tracing::trace;
 use crate::coin::Coin;
 use crate::committee::EpochId;
 use crate::event::BalanceChangeType;
-use crate::message_envelope::Message;
 use crate::messages::TransactionEvents;
 use crate::storage::{ObjectStore, SingleTxContext};
 use crate::sui_system_state::{get_sui_system_state, SuiSystemState};
