@@ -1,5 +1,34 @@
 # @mysten/wallet-adapter-unsafe-burner
 
+## 0.8.0
+
+### Minor Changes
+
+- 5c3b00cde: Add object id to staking pool and pool id to staked sui.
+- c718deef4: wallet-standard: changes sui:signAndExecuteTransaction and sui:signTransaction features to support account and chain options
+  wallet-adapter-wallet-standard: change signAndExecuteTransaction and signTransaction signatures to support account and chain options
+  wallet-adapter-wallet-standard: ensure version compatibility for of the wallet signAndExecuteTransaction and signTransaction features before using them (same major version)
+  wallet-kit-core/wallet-kit: expose accounts as ReadonlyWalletAccount instead of only the address
+  wallet-kit-core: signTransaction and signAndExecuteTransaction methods mirror the ones in standard adapter
+
+### Patch Changes
+
+- Updated dependencies [956ec28eb]
+- Updated dependencies [a211dc03a]
+- Updated dependencies [14ba89144]
+- Updated dependencies [5c3b00cde]
+- Updated dependencies [bf545c7d0]
+- Updated dependencies [a0955c479]
+- Updated dependencies [3eb3a1de8]
+- Updated dependencies [4593333bd]
+- Updated dependencies [c718deef4]
+- Updated dependencies [57c17e02a]
+- Updated dependencies [64234baaf]
+- Updated dependencies [a74df16ec]
+  - @mysten/wallet-standard@0.5.0
+  - @mysten/sui.js@0.30.0
+  - @mysten/wallet-adapter-base@0.7.0
+
 ## 0.7.1
 
 ### Patch Changes

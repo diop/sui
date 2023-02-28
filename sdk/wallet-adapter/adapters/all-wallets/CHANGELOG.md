@@ -1,5 +1,19 @@
 # @mysten/wallet-adapter-all-wallets
 
+## 0.5.0
+
+### Minor Changes
+
+- 5c3b00cde: Add object id to staking pool and pool id to staked sui.
+
+### Patch Changes
+
+- Updated dependencies [5c3b00cde]
+- Updated dependencies [bf545c7d0]
+- Updated dependencies [c718deef4]
+  - @mysten/wallet-adapter-wallet-standard@0.7.0
+  - @mysten/wallet-adapter-unsafe-burner@0.8.0
+
 ## 0.4.3
 
 ### Patch Changes

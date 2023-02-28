@@ -1,5 +1,12 @@
 # Change Log
 
+## 0.7.0
+
+### Minor Changes
+
+- 5c3b00cde: Add object id to staking pool and pool id to staked sui.
+- a0955c479: Switch from 20 to 32-byte address. Match Secp256k1.deriveKeypair with Ed25519.
+
 ## 0.6.1
 
 ### Patch Changes

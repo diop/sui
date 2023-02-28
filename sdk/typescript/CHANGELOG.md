@@ -1,5 +1,26 @@
 # @mysten/sui.js
 
+## 0.30.0
+
+### Minor Changes
+
+- 956ec28eb: Change `signMessage` to return message bytes. Add support for sui:signMessage in the wallet standard
+- a211dc03a: Change object digest from Base64 encoded to Base58 encoded for rpc version >= 0.28.0
+- 5c3b00cde: Add object id to staking pool and pool id to staked sui.
+- a0955c479: Switch from 20 to 32-byte address. Match Secp256k1.deriveKeypair with Ed25519.
+- 57c17e02a: Removed `JsonRpcProviderWithCache`, use `JsonRpcProvider` instead.
+- 64234baaf: added combined `getCheckpoint` endpoint for retrieving information about a checkpoint
+- a74df16ec: Minor change to the system transaction format
+
+### Patch Changes
+
+- 14ba89144: Change StakingPool structure by removing pool token supply and adding exchange rates.
+- 3eb3a1de8: Make Ed25519 ExportedKeyPair only use 32 bytes seed.
+- 4593333bd: Add optional parameter for filtering object by type in getOwnedObjectsByAddress
+- Updated dependencies [5c3b00cde]
+- Updated dependencies [a0955c479]
+  - @mysten/bcs@0.7.0
+
 ## 0.29.1
 
 ### Patch Changes
