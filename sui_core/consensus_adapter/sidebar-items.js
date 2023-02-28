@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["position_submit_certificate"],"struct":["ConsensusAdapter","ConsensusAdapterMetrics"],"trait":["SubmitToConsensus"],"type":["OptArcConsensusAdapterMetrics"]};

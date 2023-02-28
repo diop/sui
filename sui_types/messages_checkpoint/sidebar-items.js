@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["CheckpointContents","CheckpointRequest","CheckpointResponse","CheckpointSignatureMessage","CheckpointSummary","CheckpointSummaryEnvelope","EndOfEpochData","VerifiedCheckpoint"],"type":["CertifiedCheckpointSummary","CheckpointSequenceNumber","CheckpointTimestamp","SignedCheckpointSummary"]};

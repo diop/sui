@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["checkpoint_sequence_number","computation_cost","created","deleted","gas_budget","gas_object_digest","gas_object_id","gas_object_sequence","gas_price","id","mutated","sender","star","storage_cost","storage_rebate","total_gas_cost","transaction_content","transaction_digest","transaction_kinds","transaction_time","unwrapped","wrapped"]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["DagError"],"fn":["new_accept_notification"],"type":["AcceptNotification","DagResult"]};

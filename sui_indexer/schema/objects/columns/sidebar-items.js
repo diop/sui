@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["id","initial_shared_version","object_id","object_status","object_type","owner_address","owner_type","package_id","star","transaction_module","version"]};

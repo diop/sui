@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["commit_checkpoint","create_checkpoint","get_checkpoint","get_latest_checkpoint_sequence_number"],"struct":["Checkpoint","NewCheckpoint"]};
