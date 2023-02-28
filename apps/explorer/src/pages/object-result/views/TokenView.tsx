@@ -17,13 +17,12 @@ import {
     trimStdLibPrefix,
     genFileTypeMsg,
     normalizeSuiAddress,
-    transformURL,
 } from '../../../utils/stringUtils';
 import { type DataType } from '../ObjectResultType';
 
 import styles from './ObjectView.module.css';
 
-import { useImageMod } from '~/hooks/useImageMod';
+import { useMedia } from '~/hooks/useMedia';
 import { ObjectLink, TransactionLink } from '~/ui/InternalLink';
 import { Link } from '~/ui/Link';
 import { ObjectDetails } from '~/ui/ObjectDetails';
@@ -73,8 +72,7 @@ function TokenView({ data }: { data: DataType }) {
         return `/object/${address}?module=${metadataarr[1]}`;
     };
 
-    const imageUrl = transformURL(viewedData.url);
-    const { data: allowed } = useImageMod({ url: imageUrl });
+    const { url, nsfw } = useMedia(viewedData.url);
 
     return (
         <div>
@@ -157,11 +155,11 @@ function TokenView({ data }: { data: DataType }) {
                 {viewedData.url && (
                     <div className={styles.displaycontainer}>
                         <ObjectDetails
-                            image={viewedData.url}
+                            image={url}
                             name={name || trimStdLibPrefix(viewedData.objType)}
                             type={fileType!}
                             variant="large"
-                            nsfw={!allowed}
+                            nsfw={nsfw}
                         />
                     </div>
                 )}
