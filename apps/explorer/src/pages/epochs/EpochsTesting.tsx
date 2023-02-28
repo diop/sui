@@ -22,7 +22,7 @@ suiBcs.registerStructType(SYSTEM_EPOCH_INFO, {
     totalStakeRewards: 'u64',
 });
 
-export default function Epochs() {
+export default function EpochsTest() {
     const rpc = useRpc();
 
     const { data, isLoading } = useQuery(
@@ -35,6 +35,8 @@ export default function Epochs() {
                 100,
                 'descending'
             );
+
+            console.log(data);
 
             const [evt] = data;
             const { event }: any = evt;

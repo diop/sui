@@ -9,7 +9,7 @@ import { Text } from '~/ui/Text';
 import { formatDate } from '~/utils/timeUtils';
 
 export interface EpochProgressProps {
-    epoch?: string;
+    epoch?: number;
     start: number;
     end: number;
     inProgress?: boolean;
@@ -24,7 +24,7 @@ export function EpochProgress({
     const { progress, label } = useEpochProgress(start, end);
 
     return (
-        <div className="flex flex-nowrap">
+        <div>
             <Card bg={inProgress ? 'highlight' : 'default'} spacing="lg">
                 <div className="flex flex-col space-y-16">
                     <div className="space-y-4">

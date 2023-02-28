@@ -5,10 +5,10 @@
 import { faker } from '@faker-js/faker';
 
 export type Epoch = {
-    epoch: string;
+    epoch: number;
     validators: any;
-    transactionCount: string;
-    checkpointSet: [string, string];
+    transactionCount: number;
+    checkpointSet: [number, number];
     startTimestamp: number;
     endTimestamp: number;
     storageSize: number;
@@ -16,18 +16,18 @@ export type Epoch = {
     stakeSubsidies: number;
     storageFundEarnings: number;
     gasCostSummary?: {
-        gasRevenue: string;
-        totalRevenue: string;
-        storageRevenue: string;
-        stakeRewards: string;
+        gasRevenue: number;
+        totalRevenue: number;
+        storageRevenue: number;
+        stakeRewards: number;
     };
 };
 
-export const getEpoch = async (epoch: string): Promise<Epoch> => ({
-    epoch: '5',
+export const getEpoch = async (): Promise<Epoch> => ({
+    epoch: +faker.random.numeric(1),
     validators: [],
-    transactionCount: faker.random.numeric(7),
-    checkpointSet: [faker.random.numeric(5), faker.random.numeric(5)],
+    transactionCount: +faker.random.numeric(7),
+    checkpointSet: [+faker.random.numeric(5), +faker.random.numeric(5)],
     startTimestamp: faker.date.recent().getTime(),
     endTimestamp: faker.date.soon().getTime(),
     storageSize: +faker.random.numeric(6) / 1000,
@@ -35,344 +35,24 @@ export const getEpoch = async (epoch: string): Promise<Epoch> => ({
     stakeSubsidies: +faker.random.numeric(11),
     storageFundEarnings: +faker.random.numeric(11),
     gasCostSummary: {
-        gasRevenue: faker.random.numeric(11),
-        totalRevenue: faker.random.numeric(11),
-        storageRevenue: faker.random.numeric(11),
-        stakeRewards: faker.random.numeric(11),
+        gasRevenue: +faker.random.numeric(11),
+        totalRevenue: +faker.random.numeric(11),
+        storageRevenue: +faker.random.numeric(11),
+        stakeRewards: +faker.random.numeric(11),
     },
 });
 
 export const getCurrentEpoch = async (): Promise<Partial<Epoch>> => ({
-    epoch: '5',
+    epoch: 5,
     validators: [],
-    transactionCount: faker.random.numeric(7),
-    checkpointSet: [faker.random.numeric(5), faker.random.numeric(5)],
+    transactionCount: 4803777,
+    checkpointSet: [55159, 29804],
     startTimestamp: faker.date.recent().getTime(),
     endTimestamp: faker.date.soon().getTime(),
 });
 
-export const getEpochs = async () => [
-    {
-        timestamp: 1677007865376,
-        epoch: '20',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '7478',
-        stake_subsidy_amount: '163796375',
-        storage_fund_balance: '211185714',
-        storage_fund_inflows: '236885183',
-        storage_fund_outflows: '181263026',
-        total_gas_fees: '1243569447',
-        total_stake: '2252830614282',
-        total_stake_rewards: '1407359918',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676921471552,
-        epoch: '19',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '3125',
-        stake_subsidy_amount: '90791523',
-        storage_fund_balance: '155563552',
-        storage_fund_inflows: '345407534',
-        storage_fund_outflows: '272415832',
-        total_gas_fees: '1801419984',
-        total_stake: '1637963758756',
-        total_stake_rewards: '1892203317',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676835049533,
-        epoch: '18',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '9156',
-        stake_subsidy_amount: '37919639',
-        storage_fund_balance: '82571847',
-        storage_fund_inflows: '387002007',
-        storage_fund_outflows: '326921434',
-        total_gas_fees: '1175860241',
-        total_stake: '907915232443',
-        total_stake_rewards: '1213776394',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676748642241,
-        epoch: '17',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '5988',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '22491270',
-        storage_fund_inflows: '68592966',
-        storage_fund_outflows: '46101699',
-        total_gas_fees: '400504410',
-        total_stake: '379196391747',
-        total_stake_rewards: '396499366',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676662309642,
-        epoch: '16',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '6531',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '1',
-        storage_fund_inflows: '0',
-        storage_fund_outflows: '0',
-        total_gas_fees: '0',
-        total_stake: '4',
-        total_stake_rewards: '0',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1677007865376,
-        epoch: '15',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '7478',
-        stake_subsidy_amount: '163796375',
-        storage_fund_balance: '211185714',
-        storage_fund_inflows: '236885183',
-        storage_fund_outflows: '181263026',
-        total_gas_fees: '1243569447',
-        total_stake: '2252830614282',
-        total_stake_rewards: '1407359918',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676921471552,
-        epoch: '14',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '3125',
-        stake_subsidy_amount: '90791523',
-        storage_fund_balance: '155563552',
-        storage_fund_inflows: '345407534',
-        storage_fund_outflows: '272415832',
-        total_gas_fees: '1801419984',
-        total_stake: '1637963758756',
-        total_stake_rewards: '1892203317',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676835049533,
-        epoch: '13',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '9156',
-        stake_subsidy_amount: '37919639',
-        storage_fund_balance: '82571847',
-        storage_fund_inflows: '387002007',
-        storage_fund_outflows: '326921434',
-        total_gas_fees: '1175860241',
-        total_stake: '907915232443',
-        total_stake_rewards: '1213776394',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676748642241,
-        epoch: '12',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '5988',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '22491270',
-        storage_fund_inflows: '68592966',
-        storage_fund_outflows: '46101699',
-        total_gas_fees: '400504410',
-        total_stake: '379196391747',
-        total_stake_rewards: '396499366',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676662309642,
-        epoch: '11',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '6531',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '1',
-        storage_fund_inflows: '0',
-        storage_fund_outflows: '0',
-        total_gas_fees: '0',
-        total_stake: '4',
-        total_stake_rewards: '0',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1677007865376,
-        epoch: '10',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '7478',
-        stake_subsidy_amount: '163796375',
-        storage_fund_balance: '211185714',
-        storage_fund_inflows: '236885183',
-        storage_fund_outflows: '181263026',
-        total_gas_fees: '1243569447',
-        total_stake: '2252830614282',
-        total_stake_rewards: '1407359918',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676921471552,
-        epoch: '9',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '3125',
-        stake_subsidy_amount: '90791523',
-        storage_fund_balance: '155563552',
-        storage_fund_inflows: '345407534',
-        storage_fund_outflows: '272415832',
-        total_gas_fees: '1801419984',
-        total_stake: '1637963758756',
-        total_stake_rewards: '1892203317',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676835049533,
-        epoch: '8',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '9156',
-        stake_subsidy_amount: '37919639',
-        storage_fund_balance: '82571847',
-        storage_fund_inflows: '387002007',
-        storage_fund_outflows: '326921434',
-        total_gas_fees: '1175860241',
-        total_stake: '907915232443',
-        total_stake_rewards: '1213776394',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676748642241,
-        epoch: '7',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '5988',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '22491270',
-        storage_fund_inflows: '68592966',
-        storage_fund_outflows: '46101699',
-        total_gas_fees: '400504410',
-        total_stake: '379196391747',
-        total_stake_rewards: '396499366',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676662309642,
-        epoch: '6',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '6531',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '1',
-        storage_fund_inflows: '0',
-        storage_fund_outflows: '0',
-        total_gas_fees: '0',
-        total_stake: '4',
-        total_stake_rewards: '0',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1677007865376,
-        epoch: '5',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '7478',
-        stake_subsidy_amount: '163796375',
-        storage_fund_balance: '211185714',
-        storage_fund_inflows: '236885183',
-        storage_fund_outflows: '181263026',
-        total_gas_fees: '1243569447',
-        total_stake: '2252830614282',
-        total_stake_rewards: '1407359918',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676921471552,
-        epoch: '4',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '3125',
-        stake_subsidy_amount: '90791523',
-        storage_fund_balance: '155563552',
-        storage_fund_inflows: '345407534',
-        storage_fund_outflows: '272415832',
-        total_gas_fees: '1801419984',
-        total_stake: '1637963758756',
-        total_stake_rewards: '1892203317',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676835049533,
-        epoch: '3',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '9156',
-        stake_subsidy_amount: '37919639',
-        storage_fund_balance: '82571847',
-        storage_fund_inflows: '387002007',
-        storage_fund_outflows: '326921434',
-        total_gas_fees: '1175860241',
-        total_stake: '907915232443',
-        total_stake_rewards: '1213776394',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676748642241,
-        epoch: '2',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '5988',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '22491270',
-        storage_fund_inflows: '68592966',
-        storage_fund_outflows: '46101699',
-        total_gas_fees: '400504410',
-        total_stake: '379196391747',
-        total_stake_rewards: '396499366',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-    {
-        timestamp: 1676662309642,
-        epoch: '1',
-        protocol_version: '1',
-        reference_gas_price: '1',
-        transaction_count: '6531',
-        stake_subsidy_amount: '0',
-        storage_fund_balance: '1',
-        storage_fund_inflows: '0',
-        storage_fund_outflows: '0',
-        total_gas_fees: '0',
-        total_stake: '4',
-        total_stake_rewards: '0',
-        // doesnt exist in current data
-        checkpoint_set: [faker.random.numeric(5), faker.random.numeric(5)],
-    },
-];
+export const getEpochs = async () =>
+    Promise.all(Array.from({ length: 20 }).map(getEpoch));
 
 // getCheckpoints()
 export const getCheckpoints = async () =>

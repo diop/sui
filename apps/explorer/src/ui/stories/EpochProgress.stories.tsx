@@ -15,7 +15,7 @@ export default {
 export const InProgress: StoryObj<EpochProgressProps> = {
     name: 'In Progress',
     args: {
-        epoch: '5',
+        epoch: 5,
         start: new Date().setHours(new Date().getHours() - 3),
         end: new Date().setHours(new Date().getHours() + 2),
     },
@@ -28,7 +28,7 @@ export const InProgress: StoryObj<EpochProgressProps> = {
 
 export const Default: StoryObj<EpochProgressProps> = {
     args: {
-        epoch: '16',
+        epoch: 16,
         start: new Date().setHours(new Date().getHours() - 3),
         end: new Date().setHours(new Date().getHours() + 2),
     },

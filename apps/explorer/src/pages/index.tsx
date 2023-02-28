@@ -22,6 +22,7 @@ import { ValidatorDetails } from './validator/ValidatorDetails';
 import { ValidatorPageResult } from './validators/Validators';
 
 import { Layout } from '~/components/Layout';
+import EpochsTest from './epochs/EpochsTesting';
 
 function RedirectWithId({ base }: { base: string }) {
     const params = useParams();
@@ -41,6 +42,7 @@ export const router = sentryCreateBrowserRouter([
             { path: 'object/:id', element: <ObjectResult /> },
             { path: 'checkpoint/:digest', element: <CheckpointDetail /> },
             { path: '/epochs', element: <Epochs /> },
+            { path: '/epochs/test', element: <EpochsTest /> },
             { path: '/epoch/:epoch', element: <EpochDetail /> },
             { path: 'transaction/:id', element: <TransactionResult /> },
             { path: 'address/:id', element: <AddressResult /> },

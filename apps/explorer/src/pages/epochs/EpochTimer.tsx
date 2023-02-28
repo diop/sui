@@ -20,7 +20,7 @@ export function EpochTimer() {
     );
 
     return (
-        <div className="shadow-notification flex w-fit items-center gap-1.5 rounded-lg border border-gray-45 py-2 px-2.5">
+        <div className="flex w-fit items-center gap-1.5 rounded-lg border border-gray-45 py-2 px-2.5 shadow-notification">
             <div className="w-5 text-steel-darker">
                 <ProgressCircle progress={progress} />
             </div>

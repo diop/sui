@@ -9,13 +9,12 @@ import { EpochTimer } from './EpochTimer';
 import { getEpochs } from './mocks';
 
 import { SuiAmount } from '~/components/transaction-card/TxCardUtils';
-import { TxTimeType } from '~/components/tx-time/TxTimeType';
 import { LoadingSpinner } from '~/ui/LoadingSpinner';
 import { PlaceholderTable } from '~/ui/PlaceholderTable';
 import { TableCard } from '~/ui/TableCard';
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '~/ui/Tabs';
-import { GROWTHBOOK_FEATURES } from '~/utils/growthbook';
 import { Text } from '~/ui/Text';
+import { GROWTHBOOK_FEATURES } from '~/utils/growthbook';
 
 function Epochs() {
     const enabled = useFeature(GROWTHBOOK_FEATURES.EPOCHS_CHECKPOINTS).on;
@@ -31,7 +30,6 @@ function Epochs() {
             epochs
                 ? {
                       data: epochs?.map((epoch: any) => ({
-                          time: <TxTimeType timestamp={epoch.timestamp} />,
                           epoch: (
                               <Text variant="bodySmall/medium">
                                   {epoch.epoch}
@@ -39,28 +37,26 @@ function Epochs() {
                           ),
                           transactions: (
                               <Text variant="bodySmall/medium">
-                                  {epoch.transaction_count}
+                                  {epoch.transactionCount}
                               </Text>
                           ),
                           stakeRewards: (
-                              <SuiAmount amount={epoch.total_stake_rewards} />
+                              <SuiAmount
+                                  amount={epoch.gasCostSummary.totalRevenue}
+                              />
                           ),
                           checkpointSet: (
                               <Text variant="bodySmall/medium">
-                                  {epoch.checkpoint_set?.join(' - ')}
+                                  {epoch.checkpointSet?.join(' - ')}
                               </Text>
                           ),
                           storageRevenue: (
                               <SuiAmount
-                                  amount={
-                                      BigInt(epoch.storage_fund_inflows ?? 0) -
-                                      BigInt(epoch.storage_fund_outflows ?? 0)
-                                  }
+                                  amount={epoch.gasCostSummary.storageRevenue}
                               />
                           ),
                       })),
                       columns: [
-                          { header: 'Time', accessorKey: 'time' },
                           { header: 'Epoch', accessorKey: 'epoch' },
                           {
                               header: 'Transactions',

@@ -6,7 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Navigate, useParams } from 'react-router-dom';
 
 import { getEpoch } from './mocks';
-import { EpochStats } from './stats/Activity';
+import { EpochStats } from './stats/EpochStats';
 import { useCheckpointsTable } from './useCheckpointsTable';
 
 import { StatsWrapper } from '~/components/HomeMetrics';
@@ -22,7 +22,7 @@ function EpochDetail() {
     const { epoch } = useParams<{ epoch: string }>();
     const { data: epochData, isLoading } = useQuery(
         ['epoch', epoch],
-        async () => await getEpoch(epoch!)
+        async () => await getEpoch()
     );
 
     const { data: checkpointsTable } = useCheckpointsTable(epoch!);
@@ -33,7 +33,7 @@ function EpochDetail() {
 
     return (
         <div className="flex flex-col space-y-16">
-            <div className="flex gap-6">
+            <div className="grid grid-cols-1 gap-4 sm:gap-4 md:flex md:gap-6">
                 <EpochProgress
                     epoch={epochData.epoch}
                     start={epochData.startTimestamp}
