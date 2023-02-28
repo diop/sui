@@ -2436,9 +2436,27 @@ impl From<InvalidSharedByValue> for ExecutionFailureStatus {
     }
 }
 
+pub trait VerifyMessageVersion {
+    fn supported
+}
+
 /// The response from processing a transaction or a certified transaction
 #[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
-pub struct TransactionEffects {
+pub enum TransactionEffects {
+    V1(TransactionEffectsV1),
+}
+
+impl MessageProtocolVersion fof TransactionEffects {
+    fn check(&self, v: ProtocolVersion) -> bool {
+        match self {
+
+        }
+    }
+}
+
+/// The response from processing a transaction or a certified transaction
+#[derive(Eq, PartialEq, Clone, Debug, Serialize, Deserialize)]
+pub struct TransactionEffectsV1 {
     /// The status of the execution
     pub status: ExecutionStatus,
     /// The epoch when this transaction was executed.
