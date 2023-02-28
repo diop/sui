@@ -40,7 +40,7 @@ pub struct MoveOption<T> {
 #[derive(Debug, Serialize, Deserialize, Clone, Eq, PartialEq, JsonSchema)]
 pub struct ValidatorMetadata {
     pub sui_address: SuiAddress,
-    pub pubkey_bytes: Vec<u8>,
+    pub protocol_pubkey_bytes: Vec<u8>,
     pub network_pubkey_bytes: Vec<u8>,
     pub worker_pubkey_bytes: Vec<u8>,
     pub proof_of_possession_bytes: Vec<u8>,
@@ -52,6 +52,15 @@ pub struct ValidatorMetadata {
     pub p2p_address: Vec<u8>,
     pub consensus_address: Vec<u8>,
     pub worker_address: Vec<u8>,
+
+    pub next_epoch_protocol_pubkey_bytes: Option<Vec<u8>>,
+    pub next_epoch_proof_of_possession: Option<Vec<u8>>,
+    pub next_epoch_network_pubkey_bytes: Option<Vec<u8>>,
+    pub next_epoch_worker_pubkey_bytes: Option<Vec<u8>>,
+    pub next_epoch_net_address: Option<Vec<u8>>,
+    pub next_epoch_p2p_address: Option<Vec<u8>>,
+    pub next_epoch_consensus_address: Option<Vec<u8>>,
+    pub next_epoch_worker_address: Option<Vec<u8>>,
 }
 
 /// Rust version of the Move sui::validator::Validator type
@@ -77,7 +86,7 @@ impl Validator {
     ) -> (AuthorityName, StakeUnit, Vec<u8>) {
         (
             // TODO: Make sure we are actually verifying this on-chain.
-            AuthorityPublicKeyBytes::from_bytes(self.metadata.pubkey_bytes.as_ref())
+            AuthorityPublicKeyBytes::from_bytes(self.metadata.protocol_pubkey_bytes.as_ref())
                 .expect("Validity of public key bytes should be verified on-chain"),
             self.voting_power,
             self.metadata.net_address.clone(),
@@ -262,8 +271,10 @@ impl SuiSystemState {
             .active_validators
             .iter()
             .map(|validator| {
-                let name = narwhal_crypto::PublicKey::from_bytes(&validator.metadata.pubkey_bytes)
-                    .expect("Can't get narwhal public key");
+                let name = narwhal_crypto::PublicKey::from_bytes(
+                    &validator.metadata.protocol_pubkey_bytes,
+                )
+                .expect("Can't get narwhal public key");
                 let network_key = narwhal_crypto::NetworkPublicKey::from_bytes(
                     &validator.metadata.network_pubkey_bytes,
                 )
@@ -296,8 +307,10 @@ impl SuiSystemState {
             .active_validators
             .iter()
             .map(|validator| {
-                let name = narwhal_crypto::PublicKey::from_bytes(&validator.metadata.pubkey_bytes)
-                    .expect("Can't get narwhal public key");
+                let name = narwhal_crypto::PublicKey::from_bytes(
+                    &validator.metadata.protocol_pubkey_bytes,
+                )
+                .expect("Can't get narwhal public key");
                 let worker_address = Multiaddr::try_from(validator.metadata.worker_address.clone())
                     .expect("Can't get worker address");
                 let workers = [(

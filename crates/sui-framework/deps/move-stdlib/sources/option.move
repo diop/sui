@@ -15,7 +15,7 @@ module std::option {
         // because it's 0 for "none" or 1 for "some".
         //  TODO: disable temporarily to avoid an error triggered after
         //  https://github.com/move-language/move/pull/820 was implemented
-        //  (change the comment above to doc comment once this id fixed)
+        //  (change the comment above to doc comment once this is fixed)
         //  invariant len(vec) <= 1;
     }
 
